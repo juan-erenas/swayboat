@@ -15,6 +15,10 @@
 		44C23AA6215087C8000AC04D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 44C23AA4215087C8000AC04D /* Main.storyboard */; };
 		44C23AA8215087C9000AC04D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 44C23AA7215087C9000AC04D /* Assets.xcassets */; };
 		44C23AAB215087C9000AC04D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 44C23AA9215087C9000AC04D /* LaunchScreen.storyboard */; };
+		44C23AB3215095C7000AC04D /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C23AB2215095C7000AC04D /* Settings.swift */; };
+		44F6341821582E0F00DF0295 /* MenuScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44F6341721582E0F00DF0295 /* MenuScene.swift */; };
+		44F6341E2158AC8F00DF0295 /* WaterTrail.sks in Resources */ = {isa = PBXBuildFile; fileRef = 44F6341D2158AC8F00DF0295 /* WaterTrail.sks */; };
+		44F634202158B2E100DF0295 /* MissileEmitter.sks in Resources */ = {isa = PBXBuildFile; fileRef = 44F6341F2158B2E100DF0295 /* MissileEmitter.sks */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +32,10 @@
 		44C23AA7215087C9000AC04D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		44C23AAA215087C9000AC04D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		44C23AAC215087C9000AC04D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		44C23AB2215095C7000AC04D /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
+		44F6341721582E0F00DF0295 /* MenuScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuScene.swift; sourceTree = "<group>"; };
+		44F6341D2158AC8F00DF0295 /* WaterTrail.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = WaterTrail.sks; sourceTree = "<group>"; };
+		44F6341F2158B2E100DF0295 /* MissileEmitter.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = MissileEmitter.sks; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,12 +71,16 @@
 				44C23A9A215087C8000AC04D /* AppDelegate.swift */,
 				44C23A9C215087C8000AC04D /* GameScene.sks */,
 				44C23A9E215087C8000AC04D /* Actions.sks */,
+				44F6341D2158AC8F00DF0295 /* WaterTrail.sks */,
+				44F6341F2158B2E100DF0295 /* MissileEmitter.sks */,
+				44F6341721582E0F00DF0295 /* MenuScene.swift */,
 				44C23AA0215087C8000AC04D /* GameScene.swift */,
 				44C23AA2215087C8000AC04D /* GameViewController.swift */,
 				44C23AA4215087C8000AC04D /* Main.storyboard */,
 				44C23AA7215087C9000AC04D /* Assets.xcassets */,
 				44C23AA9215087C9000AC04D /* LaunchScreen.storyboard */,
 				44C23AAC215087C9000AC04D /* Info.plist */,
+				44C23AB2215095C7000AC04D /* Settings.swift */,
 			);
 			path = "Sway Boat";
 			sourceTree = "<group>";
@@ -133,6 +145,8 @@
 			files = (
 				44C23AA6215087C8000AC04D /* Main.storyboard in Resources */,
 				44C23A9D215087C8000AC04D /* GameScene.sks in Resources */,
+				44F6341E2158AC8F00DF0295 /* WaterTrail.sks in Resources */,
+				44F634202158B2E100DF0295 /* MissileEmitter.sks in Resources */,
 				44C23AA8215087C9000AC04D /* Assets.xcassets in Resources */,
 				44C23AAB215087C9000AC04D /* LaunchScreen.storyboard in Resources */,
 				44C23A9F215087C8000AC04D /* Actions.sks in Resources */,
@@ -146,8 +160,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				44F6341821582E0F00DF0295 /* MenuScene.swift in Sources */,
 				44C23AA1215087C8000AC04D /* GameScene.swift in Sources */,
 				44C23AA3215087C8000AC04D /* GameViewController.swift in Sources */,
+				44C23AB3215095C7000AC04D /* Settings.swift in Sources */,
 				44C23A9B215087C8000AC04D /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
