@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4410F3A822EB5DEE002ACE77 /* EndGameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4410F3A722EB5DEE002ACE77 /* EndGameScene.swift */; };
 		44C23A9B215087C8000AC04D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C23A9A215087C8000AC04D /* AppDelegate.swift */; };
 		44C23A9D215087C8000AC04D /* GameScene.sks in Resources */ = {isa = PBXBuildFile; fileRef = 44C23A9C215087C8000AC04D /* GameScene.sks */; };
 		44C23A9F215087C8000AC04D /* Actions.sks in Resources */ = {isa = PBXBuildFile; fileRef = 44C23A9E215087C8000AC04D /* Actions.sks */; };
@@ -16,12 +17,14 @@
 		44C23AA8215087C9000AC04D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 44C23AA7215087C9000AC04D /* Assets.xcassets */; };
 		44C23AAB215087C9000AC04D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 44C23AA9215087C9000AC04D /* LaunchScreen.storyboard */; };
 		44C23AB3215095C7000AC04D /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C23AB2215095C7000AC04D /* Settings.swift */; };
+		44E47E90216178D200BE23D8 /* DefenderEmitter.sks in Resources */ = {isa = PBXBuildFile; fileRef = 44E47E8F216178D200BE23D8 /* DefenderEmitter.sks */; };
 		44F6341821582E0F00DF0295 /* MenuScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44F6341721582E0F00DF0295 /* MenuScene.swift */; };
 		44F6341E2158AC8F00DF0295 /* WaterTrail.sks in Resources */ = {isa = PBXBuildFile; fileRef = 44F6341D2158AC8F00DF0295 /* WaterTrail.sks */; };
 		44F634202158B2E100DF0295 /* MissileEmitter.sks in Resources */ = {isa = PBXBuildFile; fileRef = 44F6341F2158B2E100DF0295 /* MissileEmitter.sks */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		4410F3A722EB5DEE002ACE77 /* EndGameScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndGameScene.swift; sourceTree = "<group>"; };
 		44C23A97215087C8000AC04D /* Sway Boat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Sway Boat.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		44C23A9A215087C8000AC04D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		44C23A9C215087C8000AC04D /* GameScene.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = GameScene.sks; sourceTree = "<group>"; };
@@ -33,6 +36,7 @@
 		44C23AAA215087C9000AC04D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		44C23AAC215087C9000AC04D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		44C23AB2215095C7000AC04D /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
+		44E47E8F216178D200BE23D8 /* DefenderEmitter.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = DefenderEmitter.sks; sourceTree = "<group>"; };
 		44F6341721582E0F00DF0295 /* MenuScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuScene.swift; sourceTree = "<group>"; };
 		44F6341D2158AC8F00DF0295 /* WaterTrail.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = WaterTrail.sks; sourceTree = "<group>"; };
 		44F6341F2158B2E100DF0295 /* MissileEmitter.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = MissileEmitter.sks; sourceTree = "<group>"; };
@@ -73,7 +77,9 @@
 				44C23A9E215087C8000AC04D /* Actions.sks */,
 				44F6341D2158AC8F00DF0295 /* WaterTrail.sks */,
 				44F6341F2158B2E100DF0295 /* MissileEmitter.sks */,
+				44E47E8F216178D200BE23D8 /* DefenderEmitter.sks */,
 				44F6341721582E0F00DF0295 /* MenuScene.swift */,
+				4410F3A722EB5DEE002ACE77 /* EndGameScene.swift */,
 				44C23AA0215087C8000AC04D /* GameScene.swift */,
 				44C23AA2215087C8000AC04D /* GameViewController.swift */,
 				44C23AA4215087C8000AC04D /* Main.storyboard */,
@@ -144,6 +150,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				44C23AA6215087C8000AC04D /* Main.storyboard in Resources */,
+				44E47E90216178D200BE23D8 /* DefenderEmitter.sks in Resources */,
 				44C23A9D215087C8000AC04D /* GameScene.sks in Resources */,
 				44F6341E2158AC8F00DF0295 /* WaterTrail.sks in Resources */,
 				44F634202158B2E100DF0295 /* MissileEmitter.sks in Resources */,
@@ -164,6 +171,7 @@
 				44C23AA1215087C8000AC04D /* GameScene.swift in Sources */,
 				44C23AA3215087C8000AC04D /* GameViewController.swift in Sources */,
 				44C23AB3215095C7000AC04D /* Settings.swift in Sources */,
+				4410F3A822EB5DEE002ACE77 /* EndGameScene.swift in Sources */,
 				44C23A9B215087C8000AC04D /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
