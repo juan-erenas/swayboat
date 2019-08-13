@@ -32,12 +32,12 @@ class MenuScene: SKScene {
         titleLabel1.position = CGPoint(x: frame.midX, y: frame.midY + frame.height/4)
         addChild(titleLabel1)
         
-        let titleLabel2 = SKLabelNode(text: "BOAT")
+        let titleLabel2 = SKLabelNode(text: "SQUARE?")
         titleLabel2.numberOfLines = 2
         titleLabel2.fontName = "AvenirNext-Bold"
-        titleLabel2.fontSize = 90.0
+        titleLabel2.fontSize = 80.0
         titleLabel2.fontColor = UIColor.white
-        titleLabel2.position = CGPoint(x: frame.midX, y: titleLabel1.position.y - 110)
+        titleLabel2.position = CGPoint(x: frame.midX, y: titleLabel1.position.y - 100)
         addChild(titleLabel2)
         
         let playLabel = SKLabelNode(text: "Tap to Play!")

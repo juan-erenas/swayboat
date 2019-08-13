@@ -33,7 +33,7 @@ class EndGameScene: SKScene {
         titleLabel1.position = CGPoint(x: frame.midX, y: frame.midY + frame.height/4)
         addChild(titleLabel1)
         
-        let titleLabel2 = SKLabelNode(text: "BOAT")
+        let titleLabel2 = SKLabelNode(text: "SQUARE?")
         titleLabel2.numberOfLines = 2
         titleLabel2.fontName = "AvenirNext-Bold"
         titleLabel2.fontSize = 90.0
