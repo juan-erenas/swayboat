@@ -48,6 +48,8 @@ class GameScene: SKScene {
     var tapTimer : Timer?
     var tapResistence : Double = 1
     
+    let levelAchievements = LevelAchievements()
+    
     let boat = SKSpriteNode(texture: SKTexture(imageNamed: "square"), color: .white, size: CGSize(width: 80.0, height: 80.0))
     let defender = SKSpriteNode(texture: SKTexture(imageNamed: "water trail"), color: .white, size: CGSize(width: 20, height: 20))
     
@@ -136,11 +138,16 @@ class GameScene: SKScene {
         worldNode.addChild(background)
         
         //this is the node that dims everything when the game is paused.
-        dimPanel = SKSpriteNode(color: UIColor.black, size: self.size)
-        dimPanel!.alpha = 0
-        dimPanel!.zPosition = 100
-        dimPanel!.position = CGPoint(x: self.size.width/2, y: self.size.height/2)
+        dimPanel = createDimPanel()
         worldNode.addChild(dimPanel!)
+    }
+    
+    func createDimPanel() -> SKSpriteNode {
+        let panel = SKSpriteNode(color: UIColor.black, size: self.size)
+        panel.alpha = 0
+        panel.zPosition = 100
+        panel.position = CGPoint(x: self.size.width/2, y: self.size.height/2)
+        return panel
     }
     
     func createMovingBackground(withImageNamed imageName: String,height: CGFloat,duration: Double, zPosition: CGFloat) {
@@ -329,19 +336,22 @@ class GameScene: SKScene {
             label.run(sequence)
         }
         
-        if moneyLabel != nil {
-            currentMoney += addedAmount
-            let numberFormatter = NumberFormatter()
-            numberFormatter.numberStyle = .decimal
-            let formattedMoney = numberFormatter.string(from: NSNumber(value:currentMoney))
-            self.moneyLabel?.text = "$\(formattedMoney! as String)"
-        }
-        
+        addMoney(ofAmount: addedAmount)
         updateProgressBar()
         
         //determine if it's time to go to the next level
         if currentScore == pointsToNextLevel {
             endLevel()
+        }
+    }
+    
+    func addMoney(ofAmount amount: Int) {
+        if moneyLabel != nil {
+            currentMoney += amount
+            let numberFormatter = NumberFormatter()
+            numberFormatter.numberStyle = .decimal
+            let formattedMoney = numberFormatter.string(from: NSNumber(value:currentMoney))
+            self.moneyLabel?.text = "$\(formattedMoney! as String)"
         }
     }
     
@@ -367,41 +377,56 @@ class GameScene: SKScene {
         else if level >= 3 {
             missileVariety = 100 + 1
         }
-        
         beginNextLevel()
     }
     
     func beginNextLevel() {
-        let nextLevelLabel = SKLabelNode(text: "LEVEL \(level)")
-        nextLevelLabel.fontName = "AvenirNext-Bold"
-        nextLevelLabel.fontSize = 50.0
-        nextLevelLabel.horizontalAlignmentMode = .center
-        nextLevelLabel.fontColor = UIColor.white
-        nextLevelLabel.position = CGPoint(x: frame.midX, y: frame.midY + frame.height/4)
-        nextLevelLabel.alpha = 0
-        worldNode.addChild(nextLevelLabel)
-        
-        let wait = SKAction.wait(forDuration: 1)
-        let showNextLevel = SKAction.fadeAlpha(to: 1.0, duration: 1)
-        let hideNextLevel = SKAction.fadeAlpha(to: 0, duration: 1)
-        let removeNode = SKAction.removeFromParent()
-        let startTimer = SKAction.customAction(withDuration: 0) { (_, _) in
-            self.beginSpawningPaperMissiles()
-        }
-        let sequence = SKAction.sequence([wait,showNextLevel,wait,hideNextLevel,wait,startTimer,removeNode])
-        nextLevelLabel.run(sequence)
+        showLevelRewards()
+//        let nextLevelLabel = SKLabelNode(text: "LEVEL \(level)")
+//        nextLevelLabel.fontName = "AvenirNext-Bold"
+//        nextLevelLabel.fontSize = 50.0
+//        nextLevelLabel.horizontalAlignmentMode = .center
+//        nextLevelLabel.fontColor = UIColor.white
+//        nextLevelLabel.position = CGPoint(x: frame.midX, y: frame.midY + frame.height/4)
+//        nextLevelLabel.alpha = 0
+//        worldNode.addChild(nextLevelLabel)
+//
+//        let wait = SKAction.wait(forDuration: 1)
+//        let showNextLevel = SKAction.fadeAlpha(to: 1.0, duration: 1)
+//        let hideNextLevel = SKAction.fadeAlpha(to: 0, duration: 1)
+//        let removeNode = SKAction.removeFromParent()
+//        let startTimer = SKAction.customAction(withDuration: 0) { (_, _) in
+//            self.beginSpawningPaperMissiles()
+//        }
+//        let sequence = SKAction.sequence([wait,showNextLevel,wait,hideNextLevel,wait,startTimer,removeNode])
+//        nextLevelLabel.run(sequence)
     }
     
+    
+
     //MARK: - Fight for Life
     
     func decreaseHealth(andDestroy node: SKNode) {
         boatHealth -= 34
+        
+        levelAchievements.damaged = true
         
         if boatHealth > 0 {
             destroy(node: node)
             let generator = UIImpactFeedbackGenerator(style: .heavy)
             generator.impactOccurred()
         }
+        
+        let panel = createDimPanel()
+        panel.color = .red
+        panel.alpha = 0.75
+        worldNode.addChild(panel)
+        
+        let dim = SKAction.fadeAlpha(to: 0, duration: 0.5)
+        let removeNode = SKAction.removeFromParent()
+        let sequence = SKAction.sequence([dim,removeNode])
+        panel.run(sequence)
+        
         updateHealth()
     }
     
@@ -642,7 +667,6 @@ extension GameScene: SKPhysicsContactDelegate {
                 if boatHealth <= 0 {
                     fightForLife(against: contact.bodyA.node!)
                 }
-//                endGame()
             }
         }
     }
@@ -873,7 +897,7 @@ extension GameScene {
         let yPos = self.frame.minY - 50
         let position = CGPoint(x: xPos, y: yPos)
         
-        let powerUpArray = ["slow time", "destroy all objects"]
+        let powerUpArray = ["slow time", "destroy all objects","health"]
         let randomNumber = Int(arc4random_uniform(UInt32(powerUpArray.count)))
         
         let powerUpMissile = createPowerUpButton(withName: powerUpArray[randomNumber])
@@ -931,27 +955,13 @@ extension GameScene {
         guard let name = powerUpButton.name else {return false}
         
         if name == "destroy all objects" {
-//            if currentMoney < 100 {
-//                shake(node: powerUpButton)
-//                return
-//            }else{
-//                currentMoney -= 100
-//            }
-//            unpauseGame()
             destroyAllNodes()
             powerUpButton.removeFromParent()
             return true
         } else if name == "slow time" {
-//            if currentMoney < 50 {
-//                shake(node: powerUpButton)
-//                return
-//            }else{
-//                currentMoney -= 50
-//            }
             worldNode.speed = 0.2
             defender.speed = 1
-//            unpauseGame()
-            
+
             dimPanel?.color = UIColor.blue
             dimPanel?.alpha = 1
             
@@ -970,7 +980,25 @@ extension GameScene {
             dimPanel?.run(dimPanelSequence)
             powerUpButton.removeFromParent()
             return true
-        } else {
+            
+        }else if name == "health"{
+            boatHealth += 34
+            
+            let panel = createDimPanel()
+            panel.color = .green
+            panel.alpha = 0.75
+            worldNode.addChild(panel)
+            
+            let dim = SKAction.fadeAlpha(to: 0, duration: 0.5)
+            let removeNode = SKAction.removeFromParent()
+            let sequence = SKAction.sequence([dim,removeNode])
+            panel.run(sequence)
+            
+            updateHealth()
+            powerUpButton.removeFromParent()
+            return true
+            
+        }else {
             return false
         }
         
