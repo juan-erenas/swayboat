@@ -10,10 +10,18 @@ import SpriteKit
 
 class MenuScene: SKScene {
     
+    var backgroundMusic: SKAudioNode!
+    
     override func didMove(to view: SKView) {
+        
         backgroundColor = UIColor(red: 44/255, green: 62/255, blue: 80/255, alpha: 1.0)
 //        addLogo()
         addLabels()
+        
+        if let musicURL = Bundle.main.url(forResource: "music", withExtension: "wav") {
+               backgroundMusic = SKAudioNode(url: musicURL)
+               addChild(backgroundMusic)
+           }
     }
     
 //    func addLogo() {
@@ -23,19 +31,20 @@ class MenuScene: SKScene {
 //        addChild(logo)
 //    }
 //
+
     func addLabels() {
-        let titleLabel1 = SKLabelNode(text: "PAPER")
+        let titleLabel1 = SKLabelNode(text: "CHICKEN")
         titleLabel1.numberOfLines = 2
         titleLabel1.fontName = "AvenirNext-Bold"
-        titleLabel1.fontSize = 90.0
+        titleLabel1.fontSize = 80.0
         titleLabel1.fontColor = UIColor.white
         titleLabel1.position = CGPoint(x: frame.midX, y: frame.midY + frame.height/4)
         addChild(titleLabel1)
         
-        let titleLabel2 = SKLabelNode(text: "SQUARE?")
+        let titleLabel2 = SKLabelNode(text: "EGG")
         titleLabel2.numberOfLines = 2
         titleLabel2.fontName = "AvenirNext-Bold"
-        titleLabel2.fontSize = 80.0
+        titleLabel2.fontSize = 100.0
         titleLabel2.fontColor = UIColor.white
         titleLabel2.position = CGPoint(x: frame.midX, y: titleLabel1.position.y - 100)
         addChild(titleLabel2)
@@ -61,6 +70,20 @@ class MenuScene: SKScene {
         recentScoreLabel.fontColor = UIColor.white
         recentScoreLabel.position = CGPoint(x: frame.midX, y: highscoreLabel.position.y - recentScoreLabel.frame.size.height*2)
         addChild(recentScoreLabel)
+        
+        
+        
+//        //testing circular path
+//       let point = CGPoint(x: self.view!.frame.midX, y: self.view!.frame.midY)
+//       let rect = CGRect(x: point.x, y: point.y, width: 100, height: 100)
+//       let circularView = CircularProgressView(frame: rect)
+//       print("Circularview: \(circularView)")
+//       circularView.progressColor = UIColor.red
+//       circularView.trackClr = UIColor.lightGray
+//       circularView.frame = rect
+//       self.view!.addSubview(circularView)
+//
+//        circularView.setProgressWithAnimation(duration: 5, value: 1)
     }
     
     func animate(label: SKLabelNode) {

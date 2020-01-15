@@ -12,19 +12,24 @@ import GameplayKit
 
 class GameScene: SKScene {
     
+    var backgroundMusic: SKAudioNode!
+    
     let worldNode = SKNode()
     let pauseNode = SKNode()
     
     var scoreText : SKLabelNode?
     var currentScore = 0
     var scoreLabel : SKLabelNode?
-    var currentMoney = 0
-    var moneyLabel : SKLabelNode?
+    var currentExp = 0
+    var expLabel : SKLabelNode?
     var pointsToNextLevel = 10
     var beginningOfLevel = 0
     var progressBar : SKSpriteNode?
     
+    var powerReady : Bool = true
+    
     var boatHealth : Double = 100
+    var boatShield : Double = 0
     
     var timer : Timer?
     var defendersCurrentPos : CGPoint?
@@ -48,7 +53,8 @@ class GameScene: SKScene {
     var tapTimer : Timer?
     var tapResistence : Double = 1
     
-    let levelAchievements = LevelAchievements()
+    var circularView : CircularProgressView?
+    
     
     let boat = SKSpriteNode(texture: SKTexture(imageNamed: "square"), color: .white, size: CGSize(width: 80.0, height: 80.0))
     let defender = SKSpriteNode(texture: SKTexture(imageNamed: "water trail"), color: .white, size: CGSize(width: 20, height: 20))
@@ -67,11 +73,17 @@ class GameScene: SKScene {
         beginSpawningPaperMissiles()
         createBackground()
         createScoreLabel()
-        createMoneyLabel()
+        createExpLabel()
         createProgressBar()
         createHealthBar()
         
-//        UserDefaults.standard.set(0, forKey: "Highscore")
+        //add music
+        if let musicURL = Bundle.main.url(forResource: "music", withExtension: "wav") {
+            backgroundMusic = SKAudioNode(url: musicURL)
+            addChild(backgroundMusic)
+        }
+        
+        //        UserDefaults.standard.set(0, forKey: "Highscore")
     }
     
     //MARK: - Setup Scene
@@ -80,6 +92,7 @@ class GameScene: SKScene {
         defender.colorBlendFactor = 0.1
         defender.name = "defender"
         defender.zPosition = 0
+        
         defender.position = CGPoint(x: boat.position.x, y: boat.position.y + frame.height/8)
         defender.physicsBody = SKPhysicsBody(circleOfRadius: defender.size.width/2)
         defender.physicsBody?.categoryBitMask    = PhysicsCategories.defenderCategory
@@ -97,6 +110,7 @@ class GameScene: SKScene {
         let lockInsideFrame = SKConstraint.positionX(xRange, y: yRange)
         
         defender.constraints = [ lockInsideFrame ]
+        
     }
     
     func configureBoat() {
@@ -111,13 +125,6 @@ class GameScene: SKScene {
         boat.physicsBody?.allowsRotation = false
         boat.physicsBody?.isDynamic = false
         worldNode.addChild(boat)
-//        animate()
-        
-//        guard let emitter = SKEmitterNode(fileNamed: "WaterTrail.sks") else { return }
-//        emitter.position = CGPoint(x: boat.position.x, y: boat.position.y)
-//        emitter.zPosition = -1
-//        emitter.name = "water trail"
-//        worldNode.addChild(emitter)
     }
     
     func animate() {
@@ -128,6 +135,7 @@ class GameScene: SKScene {
     }
     
     func createBackground() {
+        //creates moving background for a parallax effect
         createMovingBackground(withImageNamed: "mid ground", height: frame.height, duration: 20,zPosition: -30)
         createMovingBackground(withImageNamed: "foreground", height: frame.height, duration: 10, zPosition: -20)
         
@@ -176,13 +184,35 @@ class GameScene: SKScene {
         physicsWorld.contactDelegate = self
     }
     
+    func createPowerUpIndicator() {
+        
+        let pos = CGPoint(x: frame.minX + 40 , y: boat.position.y)
+        
+        let powerUpIcon = SKSpriteNode(texture: SKTexture(imageNamed: "water trail"), color: .white, size: CGSize(width: 30, height: 30))
+               powerUpIcon.colorBlendFactor = 1.0
+        powerUpIcon.position = CGPoint(x: pos.x, y: pos.y)
+               worldNode.addChild(powerUpIcon)
+        
+        //MAKE OWN CLASS THAT HOLDS THE VIEW, COOLDOWN AND WHAT ICON TO USE?
+        let rect = CGRect(x: pos.x, y: pos.y, width: 40, height: 40)
+        circularView = CircularProgressView(frame: rect)
+        circularView?.layer.anchorPoint = CGPoint(x: 1, y: 1)
+        circularView!.progressColor = UIColor.red
+        circularView!.trackClr = UIColor.lightGray
+        self.view!.addSubview(circularView!)
+        circularView!.setProgressWithAnimation(duration: 10, fromValue: Float(0), toValue: Float(1))
+        
+       
+    }
+    
     func createScoreLabel() {
-        scoreText = SKLabelNode(text: "Score:")
+        scoreText = SKLabelNode(text: "Kills:")
         scoreText!.fontName = "AvenirNext-Bold"
         scoreText!.fontSize = 30.0
         scoreText?.horizontalAlignmentMode = .left
         scoreText!.fontColor = UIColor.white
         scoreText!.position = CGPoint(x: frame.minX + frame.width/20, y: frame.maxY - frame.height/15)
+        scoreText?.zPosition = 11
         worldNode.addChild(scoreText!)
         
         scoreLabel = SKLabelNode(text: "\(currentScore)")
@@ -191,23 +221,33 @@ class GameScene: SKScene {
         scoreLabel?.horizontalAlignmentMode = .left
         scoreLabel!.fontColor = UIColor.white
         scoreLabel!.position = CGPoint(x: scoreText!.position.x + 100, y: scoreText!.position.y)
+        scoreLabel!.zPosition = 11
         worldNode.addChild(scoreLabel!)
+        
+        
+        let pos = scoreText!.position
+        let scoreHUDTile = SKShapeNode(rect: CGRect(x: pos.x - 50, y: pos.y - 8, width: 240, height: 50), cornerRadius: 30)
+        scoreHUDTile.fillColor = UIColor.lightGray
+        scoreHUDTile.lineWidth = 0
+        scoreHUDTile.alpha = 0.3
+        scoreHUDTile.zPosition = 10
+        worldNode.addChild(scoreHUDTile)
     }
     
-    func createMoneyLabel() {
-        currentMoney = 0
-        //currentMoney = UserDefaults.standard.integer(forKey: "CurrentMoney")
+    func createExpLabel() {
+        currentExp = 0
+        //currentExp = UserDefaults.standard.integer(forKey: "CurrentExp")
         
         let numberFormatter = NumberFormatter()
         numberFormatter.numberStyle = .decimal
-        let formattedMoney = numberFormatter.string(from: NSNumber(value:currentMoney))
-        moneyLabel = SKLabelNode(text: "$\(formattedMoney! as String)")
-        moneyLabel!.fontName = "AvenirNext-Bold"
-        moneyLabel!.fontSize = 30.0
-        moneyLabel?.horizontalAlignmentMode = .right
-        moneyLabel!.fontColor = UIColor.white
-        moneyLabel!.position = CGPoint(x: frame.maxX - frame.width/20, y: frame.maxY - frame.height/15)
-        worldNode.addChild(moneyLabel!)
+        let formattedExp = numberFormatter.string(from: NSNumber(value:currentExp))
+        expLabel = SKLabelNode(text: "+\(formattedExp! as String)xp")
+        expLabel!.fontName = "AvenirNext-Bold"
+        expLabel!.fontSize = 30.0
+        expLabel?.horizontalAlignmentMode = .right
+        expLabel!.fontColor = UIColor.white
+        expLabel!.position = CGPoint(x: frame.maxX - frame.width/20, y: frame.maxY - frame.height/15)
+        worldNode.addChild(expLabel!)
         
     }
     
@@ -252,10 +292,20 @@ class GameScene: SKScene {
         currentHealthBar.anchorPoint = CGPoint(x: 0, y: 0)
         currentHealthBar.name = "current health bar"
         currentHealthBar.position = position
-        currentHealthBar.zPosition = 10
+        currentHealthBar.zPosition = 11
+        
+        
+        let shieldPosition = CGPoint(x: position.x, y: position.y + 5)
+        let shieldSize = CGSize(width: 0, height: 5)
+        let currentShieldBar = SKSpriteNode(color: UIColor.blue, size: shieldSize)
+        currentShieldBar.anchorPoint = CGPoint(x: 0, y: 0)
+        currentShieldBar.name = "current shield bar"
+        currentShieldBar.position = shieldPosition
+        currentShieldBar.zPosition = 10
         
         worldNode.addChild(currentHealthBar)
         worldNode.addChild(maxHealthBar)
+        worldNode.addChild(currentShieldBar)
     }
     
     
@@ -269,15 +319,15 @@ class GameScene: SKScene {
             tappedInFightForLife()
         }
         
-//        if worldNode.isPaused {
-//            //check if paused power up buttons are pressed
-//            let positionInScene = firstTouch!
-//            let touchedNode = self.atPoint(positionInScene)
-//            checkAndExecute(powerUpButton: touchedNode)
-//        }
+        //        if worldNode.isPaused {
+        //            //check if paused power up buttons are pressed
+        //            let positionInScene = firstTouch!
+        //            let touchedNode = self.atPoint(positionInScene)
+        //            checkAndExecute(powerUpButton: touchedNode)
+        //        }
     }
     
-  
+    
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         let touchPos = touches.first!.location(in: self)
@@ -302,7 +352,7 @@ class GameScene: SKScene {
             worldNode.isPaused = true
         }
     }
-  
+    
     
     func findAngle(of firstPoint: CGPoint, and secondPoint: CGPoint) -> CGFloat {
         let xDiff = secondPoint.x - firstPoint.x
@@ -316,17 +366,17 @@ class GameScene: SKScene {
         if let nodeName = node.name {
             node.removeFromParent()
             let addedAmount = missileNameArray.firstIndex(of: nodeName)! + 1
-            addPointToScore(andMoneyOfAmount: addedAmount)
+            addPointToScore(andExpOfAmount: addedAmount)
             //Handles yellow missiles which would usually have children for more points
             if node.name == "yellow missile" {
                 for _ in 0...2 {
-                    addPointToScore(andMoneyOfAmount: addedAmount - 1)
+                    addPointToScore(andExpOfAmount: addedAmount - 1)
                 }
             }
         }
     }
     
-    func addPointToScore(andMoneyOfAmount addedAmount: Int) {
+    func addPointToScore(andExpOfAmount addedAmount: Int) {
         currentScore += 1
         if let label = scoreLabel {
             let scaleUp = SKAction.scale(to: 1.4, duration: 0.1)
@@ -336,7 +386,7 @@ class GameScene: SKScene {
             label.run(sequence)
         }
         
-        addMoney(ofAmount: addedAmount)
+        addExp(ofAmount: addedAmount)
         updateProgressBar()
         
         //determine if it's time to go to the next level
@@ -345,13 +395,13 @@ class GameScene: SKScene {
         }
     }
     
-    func addMoney(ofAmount amount: Int) {
-        if moneyLabel != nil {
-            currentMoney += amount
+    func addExp(ofAmount amount: Int) {
+        if expLabel != nil {
+            currentExp += amount
             let numberFormatter = NumberFormatter()
             numberFormatter.numberStyle = .decimal
-            let formattedMoney = numberFormatter.string(from: NSNumber(value:currentMoney))
-            self.moneyLabel?.text = "$\(formattedMoney! as String)"
+            let formattedExp = numberFormatter.string(from: NSNumber(value:currentExp))
+            self.expLabel?.text = "+\(formattedExp! as String)xp"
         }
     }
     
@@ -369,8 +419,8 @@ class GameScene: SKScene {
         
         scoreLabel?.text = "\(currentScore)"
         updateProgressBar()
-        //UserDefaults.standard.set(currentMoney, forKey: "CurrentMoney")
-         level += 1
+        //UserDefaults.standard.set(currentExp, forKey: "CurrentExp")
+        level += 1
         if level == 2 {
             missileVariety = 90
         }
@@ -381,35 +431,24 @@ class GameScene: SKScene {
     }
     
     func beginNextLevel() {
-        showLevelRewards()
-//        let nextLevelLabel = SKLabelNode(text: "LEVEL \(level)")
-//        nextLevelLabel.fontName = "AvenirNext-Bold"
-//        nextLevelLabel.fontSize = 50.0
-//        nextLevelLabel.horizontalAlignmentMode = .center
-//        nextLevelLabel.fontColor = UIColor.white
-//        nextLevelLabel.position = CGPoint(x: frame.midX, y: frame.midY + frame.height/4)
-//        nextLevelLabel.alpha = 0
-//        worldNode.addChild(nextLevelLabel)
-//
-//        let wait = SKAction.wait(forDuration: 1)
-//        let showNextLevel = SKAction.fadeAlpha(to: 1.0, duration: 1)
-//        let hideNextLevel = SKAction.fadeAlpha(to: 0, duration: 1)
-//        let removeNode = SKAction.removeFromParent()
-//        let startTimer = SKAction.customAction(withDuration: 0) { (_, _) in
-//            self.beginSpawningPaperMissiles()
-//        }
-//        let sequence = SKAction.sequence([wait,showNextLevel,wait,hideNextLevel,wait,startTimer,removeNode])
-//        nextLevelLabel.run(sequence)
+//        raiseDifficulty()
+
     }
     
     
-
     //MARK: - Fight for Life
     
     func decreaseHealth(andDestroy node: SKNode) {
-        boatHealth -= 34
         
-        levelAchievements.damaged = true
+        if boatShield > 0 {
+            boatShield -= 34
+            //resets to zero if it happens to go negative
+            if boatShield < 0 {boatShield = 0}
+        } else {
+            boatHealth -= 34
+            //resets to zero if it happens to go negative
+            if boatHealth < 0 {boatHealth = 0}
+        }
         
         if boatHealth > 0 {
             destroy(node: node)
@@ -437,6 +476,13 @@ class GameScene: SKScene {
             let changeSize = SKAction.resize(toWidth: width, duration: 0.2)
             healthBar.run(changeSize)
         }
+        
+        if let shieldBar = worldNode.childNode(withName: "current shield bar") {
+            let progress = CGFloat(boatShield) / CGFloat(100)
+            let shieldWidth = 100 * progress
+            let changeSize = SKAction.resize(toWidth: shieldWidth, duration: 0.2)
+            shieldBar.run(changeSize)
+        }
     }
     
     
@@ -445,6 +491,7 @@ class GameScene: SKScene {
             endGame()
             return
         }
+        
         fightForLifeAvailable = false
         
         haltEnemies(except: enemy)
@@ -460,26 +507,20 @@ class GameScene: SKScene {
         let moveToFront = SKAction.move(to: newPos, duration: 0.2)
         enemy.run(moveToFront)
         
-        let maxHeight = CGFloat(100)
-        let position = CGPoint(x: boat.position.x - 70, y: boat.position.y - 60)
-        
-        let maxBar = SKSpriteNode(color: UIColor.white, size: CGSize(width: 5, height: maxHeight))
-        maxBar.anchorPoint = CGPoint(x: 0, y: 0)
-        maxBar.name = "max bar"
-        maxBar.position = position
-        maxBar.zPosition = 9
+        //        let maxHeight = CGFloat(100)
+        //        let position = CGPoint(x: boat.position.x - 70, y: boat.position.y - 60)
         
         let progress = CGFloat(currentTaps) / CGFloat(maxTaps)
         
-        let size = CGSize(width: 5, height: (maxHeight * progress))
-        tapBar = SKSpriteNode(color: UIColor.red, size: size)
-        tapBar!.anchorPoint = CGPoint(x: 0, y: 0)
-        tapBar!.name = "progress bar"
-        tapBar!.position = position
-        tapBar!.zPosition = 10
-        
-        worldNode.addChild(tapBar!)
-        worldNode.addChild(maxBar)
+        //creates a circular loading bar that fills as you tap. Subview of UIView!
+        let point = CGPoint(x: frame.midX, y: frame.midY)
+        let rect = CGRect(x: point.x, y: point.y, width: 200, height: 200)
+        circularView = CircularProgressView(frame: rect)
+        circularView?.layer.anchorPoint = CGPoint(x: 1, y: 1)
+        circularView!.progressColor = UIColor.red
+        circularView!.trackClr = UIColor.lightGray
+        self.view!.addSubview(circularView!)
+        circularView!.setProgressWithAnimation(duration: 0, fromValue: Float(progress), toValue: Float(progress))
         
         tapTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector:#selector(GameScene.addTapResistance), userInfo: nil, repeats: true)
         
@@ -489,8 +530,13 @@ class GameScene: SKScene {
         currentTaps -= tapResistence
         
         let progress = CGFloat(currentTaps) / CGFloat(maxTaps)
-        let maxHeight = CGFloat(100)
-        tapBar?.size.height = maxHeight * progress
+        
+        let strokeEnd = (circularView!.progressLayer.presentation()?.value(forKey: "strokeEnd") as! NSNumber).floatValue
+        
+        circularView!.setProgressWithAnimation(duration: 0.2, fromValue: strokeEnd, toValue: Float(progress))
+        
+        //        let maxHeight = CGFloat(100)
+        //        tapBar?.size.height = maxHeight * progress
         
         if currentTaps <= 0 {
             endGame()
@@ -502,17 +548,22 @@ class GameScene: SKScene {
         currentTaps += 1
         
         let progress = CGFloat(currentTaps) / CGFloat(maxTaps)
-        let maxHeight = CGFloat(100)
-        tapBar?.size.height = maxHeight * progress
+        let strokeEnd = (circularView!.progressLayer.presentation()?.value(forKey: "strokeEnd") as! NSNumber).floatValue
         
-        let scaleUp = SKAction.scaleX(by: 1, y: 1.1, duration: 0.05)
-        let scaleDown = SKAction.scale(to: 1.0, duration: 0.05)
-        let sequence = SKAction.sequence([scaleUp,scaleDown])
-        tapBar?.run(sequence)
+        circularView!.setProgressWithAnimation(duration: 0.1, fromValue: strokeEnd, toValue: Float(progress))
         
-//        if let child = worldNode.childNode(withName: "max bar") as? SKSpriteNode {
-//            child.run(sequence)
-//        }
+        //        let maxHeight = CGFloat(100)
+        //        tapBar?.size.height = maxHeight * progress
+        //
+        //        let scaleUp = SKAction.scaleX(by: 1, y: 1.1, duration: 0.05)
+        //        let scaleDown = SKAction.scale(to: 1.0, duration: 0.05)
+        //        let sequence = SKAction.sequence([scaleUp,scaleDown])
+        //        tapBar?.run(sequence)
+        
+        //        if let child = worldNode.childNode(withName: "max bar") as? SKSpriteNode {
+        //            child.run(sequence)
+        //        }
+        
         if currentTaps >= maxTaps {
             unhaltEnemies()
         }
@@ -537,7 +588,7 @@ class GameScene: SKScene {
         tapLabel.fontColor = UIColor.white
         tapLabel.position = CGPoint(x: frame.midX, y: frame.midY)
         worldNode.addChild(tapLabel)
-    
+        
         let scaleUp = SKAction.scale(to: 1.5, duration: 0.15)
         let scaleDown = SKAction.scale(to: 1.0, duration: 0.15)
         let sequence = SKAction.sequence([scaleUp,scaleDown])
@@ -547,9 +598,9 @@ class GameScene: SKScene {
     
     func haltEnemies(except mainEnemy : SKNode) {
         
-//        timerWasValid = timer?.isValid ?? false
-//        timer?.invalidate()
-//        timer = nil
+        //        timerWasValid = timer?.isValid ?? false
+        //        timer?.invalidate()
+        //        timer = nil
         
         for enemy in worldNode.children {
             guard let enemyName = enemy.name else {continue}
@@ -562,7 +613,7 @@ class GameScene: SKScene {
                 let vector = CGVector(dx: xDif * 7, dy: yDif * 7)
                 let move = SKAction.move(by: vector, duration: 0.5)
                 enemy.run(move)
-//                enemy.isPaused = true
+                //                enemy.isPaused = true
             }
             if powerUpArray.contains(enemyName) {
                 enemy.removeFromParent()
@@ -585,26 +636,29 @@ class GameScene: SKScene {
         fightForLifeActive = false
         worldNode.isPaused = false
         
-        let removeChildArray = ["max bar","fight for life label","tap label"]
+        let removeChildArray = ["fight for life label","tap label"]
         for childName in removeChildArray {
             if let child = worldNode.childNode(withName: childName) {
                 child.removeFromParent()
             }
+            
         }
         
-        if tapBar != nil {
-            tapBar!.removeFromParent()
-            tapBar = nil
-        }
+        //        if tapBar != nil {
+        //            tapBar!.removeFromParent()
+        //            tapBar = nil
+        //        }
+        circularView?.removeFromSuperview()
+        circularView = nil
         
         destroyAllNodes()
         
-//        if missilesDeployed != pointsToNextLevel && timerWasValid ?? false {
-//            timerWasValid = nil
-//            beginSpawningPaperMissiles()
-//        } else {
-//            timerWasValid = nil
-//        }
+        //        if missilesDeployed != pointsToNextLevel && timerWasValid ?? false {
+        //            timerWasValid = nil
+        //            beginSpawningPaperMissiles()
+        //        } else {
+        //            timerWasValid = nil
+        //        }
     }
     
     //MARK: - End Game
@@ -614,17 +668,26 @@ class GameScene: SKScene {
         //this happens when two missiles attack at the same time.
         guard let size = view?.bounds.size else {return}
         
+        if tapTimer != nil {
+            tapTimer?.invalidate()
+            tapTimer = nil
+        }
+        
+        //in case the circularView is showing
+        circularView?.removeFromSuperview()
+        circularView = nil
+        
         if timer != nil {
             timer?.invalidate()
             timer = nil
         }
         
-        UserDefaults.standard.set(currentMoney, forKey: "CurrentMoney")
+        UserDefaults.standard.set(currentExp, forKey: "CurrentExp")
         UserDefaults.standard.set(currentScore, forKey: "RecentScore")
         if currentScore > UserDefaults.standard.integer(forKey: "Highscore") {
             UserDefaults.standard.set(currentScore, forKey: "Highscore")
         }
-
+        
         let gameScene = MenuScene(size: size)
         view!.presentScene(gameScene)
         
@@ -648,9 +711,11 @@ extension GameScene: SKPhysicsContactDelegate {
                     handleContactBetween(defender: contact.bodyA.node!, andMissile: contact.bodyB.node!)
                 } else {
                     handleContactBetween(defender: contact.bodyB.node!, andMissile: contact.bodyA.node!)
-                    }
+                }
                 let generator = UIImpactFeedbackGenerator(style: .medium)
-                    generator.impactOccurred()
+                generator.impactOccurred()
+                let impactSound = SKAction.playSoundFileNamed("impact.mp3", waitForCompletion: false)
+                self.run(impactSound)
             }
             
             if fightForLifeActive {
@@ -672,18 +737,18 @@ extension GameScene: SKPhysicsContactDelegate {
     }
     
     func handleContactBetween(defender: SKNode, andMissile missile: SKNode) {
-    
+        
         if missile.name == "yellow missile" {
             breakApart(yellowMissile: missile)
             let pointsAdded = missileNameArray.firstIndex(of: missile.name!)!
-            addPointToScore(andMoneyOfAmount: pointsAdded)
+            addPointToScore(andExpOfAmount: pointsAdded)
             return
         }
         
         missile.removeFromParent()
         let pointsAdded = missileNameArray.firstIndex(of: missile.name!)! + 1
-        addPointToScore(andMoneyOfAmount: pointsAdded)
-
+        addPointToScore(andExpOfAmount: pointsAdded)
+        
     }
     
 }
@@ -702,7 +767,7 @@ extension GameScene {
         if fightForLifeActive {
             return
         }
-       
+        
         let randomNumber = Int(arc4random_uniform(UInt32(missileVariety)))
         
         if randomNumber <= 1 {
@@ -710,36 +775,36 @@ extension GameScene {
         }
         
         switch randomNumber {
-//        missile that moves slowly directly towards the boat
+        //        missile that moves slowly directly towards the boat
         case 0...60:
             spawnNormalMissile()
-
+            
         //missile that comes out from the right corner slowly, then attacks fast
         case 61...75:
-
+            
             let paperMissile = createMissileNode(atPosition: CGPoint(x: frame.maxX, y: frame.maxY),withName: "red missile")
             worldNode.addChild(paperMissile)
             animateWithPulse(ofColor: .red, for: paperMissile)
-
+            
             let moveToCenter = SKAction.move(to: CGPoint(x: frame.midX + frame.width/5, y: frame.midY + frame.height/4), duration: 2)
             let moveToBoat = SKAction.move(to: CGPoint(x: boat.position.x, y: boat.position.y), duration: 0.8)
             let sequence = SKAction.sequence([moveToCenter,moveToBoat])
-
+            
             paperMissile.run(sequence)
-
+            
         //missile that comes from the left corner slowly, then attacks fast
         case 76...90:
-
-//            let randXPos = CGFloat(arc4random_uniform(UInt32(frame.minX - frame.maxX)))
-//            let paperMissile = createMissileNode(atPosition: CGPoint(x: randXPos, y: frame.maxY), withName: "red missile")
+            
+            //            let randXPos = CGFloat(arc4random_uniform(UInt32(frame.minX - frame.maxX)))
+            //            let paperMissile = createMissileNode(atPosition: CGPoint(x: randXPos, y: frame.maxY), withName: "red missile")
             let paperMissile = createMissileNode(atPosition: CGPoint(x: frame.minX, y: frame.maxY),withName: "red missile")
             worldNode.addChild(paperMissile)
             animateWithPulse(ofColor: .red, for: paperMissile)
-
+            
             let moveToCenter = SKAction.move(to: CGPoint(x: frame.midX - frame.width/5, y: frame.midY + frame.height/4), duration: 2)
-            let moveToBoat = SKAction.move(to: CGPoint(x: boat.position.x, y: boat.position.y), duration: 0.5)
+            let moveToBoat = SKAction.move(to: CGPoint(x: boat.position.x, y: boat.position.y), duration: 0.8)
             let sequence = SKAction.sequence([moveToCenter,moveToBoat])
-
+            
             paperMissile.run(sequence)
             
         case 90...100:
@@ -815,7 +880,7 @@ extension GameScene {
             let sequence = SKAction.sequence([makeYellow,moveToPosition,makeDestroyable,moveToBoat])
             paperMissile.run(sequence)
         }
-     
+        
     }
     
     //call this function to get a random position for spawning points
@@ -853,7 +918,7 @@ extension GameScene {
         let paperMissile = SKSpriteNode(texture: SKTexture(imageNamed: "water trail"), color: .white, size: CGSize(width: 30, height: 30))
         paperMissile.colorBlendFactor = 1.0
         paperMissile.name = name
-        paperMissile.zPosition = 2
+        paperMissile.zPosition = 12
         paperMissile.position = CGPoint(x: position.x, y: position.y)
         paperMissile.physicsBody = SKPhysicsBody(circleOfRadius: paperMissile.size.width/2)
         paperMissile.physicsBody?.categoryBitMask = PhysicsCategories.paperMissileCategory
@@ -876,7 +941,7 @@ extension GameScene {
         let whitePulse = SKAction.colorize(with: .white, colorBlendFactor: 1.0, duration: 0.2)
         let enlarge = SKAction.scale(to: 1.1, duration: 0.2)
         let shrink = SKAction.scale(to: 1.0, duration: 0.2)
-
+        
         let enlargeAndColor = SKAction.group([colorPulse,enlarge])
         let shrinkAndColorWhite = SKAction.group([shrink,whitePulse])
         let sequence = SKAction.sequence([enlargeAndColor,shrinkAndColorWhite])
@@ -886,7 +951,8 @@ extension GameScene {
     
     
 }
-//MARK: - Pause Game
+
+//MARK: - PowerUps
 extension GameScene {
     
     func createPowerUpMissile() {
@@ -913,7 +979,20 @@ extension GameScene {
     }
     
     @objc func doubleTapped() {
-
+        
+        if powerReady == false {return}
+        powerReady = false
+        
+        let size = defender.size
+        let grow = SKAction.resize(toWidth: size.width * 3, height: size.height * 3, duration: 0.2)
+        let wait = SKAction.wait(forDuration: 3)
+        let shrink = SKAction.resize(toWidth: size.width, height: size.height, duration: 0.2)
+        let cooldown = SKAction.wait(forDuration: 10)
+        let activatePower = SKAction.customAction(withDuration: 0) { (_, _) in
+            self.powerReady = true
+        }
+        let sequence = SKAction.sequence([grow,wait,shrink,cooldown,activatePower])
+        self.defender.run(sequence)
     }
     
     func pauseGame() {
@@ -961,7 +1040,7 @@ extension GameScene {
         } else if name == "slow time" {
             worldNode.speed = 0.2
             defender.speed = 1
-
+            
             dimPanel?.color = UIColor.blue
             dimPanel?.alpha = 1
             
@@ -981,8 +1060,17 @@ extension GameScene {
             powerUpButton.removeFromParent()
             return true
             
-        }else if name == "health"{
-            boatHealth += 34
+        } else if name == "health"{
+            if boatHealth <= 66 {
+                boatHealth += 34
+            }else if boatHealth > 66 && boatHealth < 100 {
+                boatHealth = 100
+            } else if boatHealth == 100 && boatShield <= 64 {
+                boatShield += 34
+            } else {
+                boatShield = 100
+            }
+            
             
             let panel = createDimPanel()
             panel.color = .green
@@ -998,10 +1086,9 @@ extension GameScene {
             powerUpButton.removeFromParent()
             return true
             
-        }else {
+        } else {
             return false
         }
-        
     }
     
     func destroyAllNodes() {
@@ -1014,17 +1101,18 @@ extension GameScene {
         }
         let sequence = SKAction.sequence([slowlyDim,changeBacktoBlack])
         dimPanel?.run(sequence)
+        
         //Destroy all nodes.
         for node in worldNode.children {
             guard let nodeName = node.name else {continue}
             if missileNameArray.contains(nodeName) {
                 node.removeFromParent()
                 let addedAmount = missileNameArray.firstIndex(of: nodeName)! + 1
-                addPointToScore(andMoneyOfAmount: addedAmount)
+                addPointToScore(andExpOfAmount: addedAmount)
                 //Handles yellow missiles which would usually have children for more points
                 if node.name == "yellow missile" {
                     for _ in 0...2 {
-                        addPointToScore(andMoneyOfAmount: addedAmount - 1)
+                        addPointToScore(andExpOfAmount: addedAmount - 1)
                     }
                 }
             } else if nodeName == "missile smoke" {
@@ -1045,7 +1133,7 @@ extension GameScene {
         
         let move = SKAction.move(to: newLocation, duration: 0.1)
         
-        //also adds a label indicating the cost of power up button
+        //Also adds a label indicating the cost of power up button
         let wait = SKAction.wait(forDuration: 0.1)
         let addLabel = SKAction.customAction(withDuration: 0) {_,_ in
             let costLabel = self.createLabel(for: powerUpBtn, ofAmount: cost)
