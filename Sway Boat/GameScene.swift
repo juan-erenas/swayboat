@@ -26,6 +26,10 @@ class GameScene: SKScene {
     var beginningOfLevel = 0
     var progressBar : SKSpriteNode?
     
+    var colorChanger : ColorChanger?
+    var colorChangeTimer : Timer?
+    
+    var specialPowerIcon : SpecialPowerIcon?
     var powerReady : Bool = true
     
     var boatHealth : Double = 100
@@ -38,7 +42,8 @@ class GameScene: SKScene {
     var missileSpawnRate = 0.4
     var objectPositionArray = Array<CGPoint>()
     var missileVariety = 60
-    let missileNameArray = ["paper missile","red missile","yellow missile child","yellow missile"]
+    let missileNameArray = ["normal enemy","diver enemy","splitter enemy","splitter child enemy"]
+//    let missileNameArray = ["paper missile","red missile","yellow missile child","yellow missile"]
     var missilesDeployed = 0
     var level = 1
     
@@ -53,11 +58,12 @@ class GameScene: SKScene {
     var tapTimer : Timer?
     var tapResistence : Double = 1
     
-    var circularView : CircularProgressView?
-    
+    var tapLoadingBar : CircularProgressView?
+    var powerLoadBar : CircularProgressView?
     
     let boat = SKSpriteNode(texture: SKTexture(imageNamed: "square"), color: .white, size: CGSize(width: 80.0, height: 80.0))
     let defender = SKSpriteNode(texture: SKTexture(imageNamed: "water trail"), color: .white, size: CGSize(width: 20, height: 20))
+    let colorShield = SKSpriteNode(texture: SKTexture(imageNamed: "color-shield"), color: .white, size: CGSize(width: 100.0, height: 100.0))
     
     override func didMove(to view: SKView) {
         addChild(pauseNode)
@@ -71,11 +77,14 @@ class GameScene: SKScene {
         configureDefender()
         setupPhysics()
         beginSpawningPaperMissiles()
-        createBackground()
+//        createBackground()
+        configureDimPanel()
         createScoreLabel()
         createExpLabel()
         createProgressBar()
         createHealthBar()
+        createPowerUpIndicator()
+        createColorChanger()
         
         //add music
         if let musicURL = Bundle.main.url(forResource: "music", withExtension: "wav") {
@@ -125,6 +134,20 @@ class GameScene: SKScene {
         boat.physicsBody?.allowsRotation = false
         boat.physicsBody?.isDynamic = false
         worldNode.addChild(boat)
+        
+        colorShield.colorBlendFactor = 1
+        colorShield.name = "color-shield"
+        colorShield.zPosition = 0
+        colorShield.color = UIColor.white
+        colorShield.position = boat.position
+        colorShield.physicsBody = SKPhysicsBody(circleOfRadius: colorShield.size.width/2)
+        colorShield.physicsBody?.categoryBitMask = PhysicsCategories.colorShieldCategory
+        colorShield.physicsBody?.contactTestBitMask = PhysicsCategories.paperMissileCategory
+        colorShield.physicsBody?.collisionBitMask = PhysicsCategories.paperMissileCategory
+        colorShield.physicsBody?.allowsRotation = false
+        colorShield.physicsBody?.isDynamic = false
+        worldNode.addChild(colorShield)
+        
     }
     
     func animate() {
@@ -132,6 +155,12 @@ class GameScene: SKScene {
         let scaleDown = SKAction.scale(to: 1.0, duration: 0.5)
         let sequence = SKAction.sequence([scaleUp,scaleDown])
         boat.run(SKAction.repeatForever(sequence))
+    }
+    
+    //Remove once you create individual dim panels
+    func configureDimPanel() {
+        dimPanel = createDimPanel()
+        worldNode.addChild(dimPanel!)
     }
     
     func createBackground() {
@@ -146,8 +175,7 @@ class GameScene: SKScene {
         worldNode.addChild(background)
         
         //this is the node that dims everything when the game is paused.
-        dimPanel = createDimPanel()
-        worldNode.addChild(dimPanel!)
+        
     }
     
     func createDimPanel() -> SKSpriteNode {
@@ -184,26 +212,49 @@ class GameScene: SKScene {
         physicsWorld.contactDelegate = self
     }
     
+    //MARK: - Setup HUD
+    
     func createPowerUpIndicator() {
         
         let pos = CGPoint(x: frame.minX + 40 , y: boat.position.y)
         
-        let powerUpIcon = SKSpriteNode(texture: SKTexture(imageNamed: "water trail"), color: .white, size: CGSize(width: 30, height: 30))
-               powerUpIcon.colorBlendFactor = 1.0
-        powerUpIcon.position = CGPoint(x: pos.x, y: pos.y)
-               worldNode.addChild(powerUpIcon)
+        specialPowerIcon = SpecialPowerIcon(size: CGSize(width: 30, height: 30), powerType: .growBig)
+        specialPowerIcon!.position = CGPoint(x: pos.x, y: pos.y)
+        specialPowerIcon!.zPosition = 1
+        worldNode.addChild(specialPowerIcon!)
         
-        //MAKE OWN CLASS THAT HOLDS THE VIEW, COOLDOWN AND WHAT ICON TO USE?
-        let rect = CGRect(x: pos.x, y: pos.y, width: 40, height: 40)
-        circularView = CircularProgressView(frame: rect)
-        circularView?.layer.anchorPoint = CGPoint(x: 1, y: 1)
-        circularView!.progressColor = UIColor.red
-        circularView!.trackClr = UIColor.lightGray
-        self.view!.addSubview(circularView!)
-        circularView!.setProgressWithAnimation(duration: 10, fromValue: Float(0), toValue: Float(1))
+        //Makes cooldown circle around power up icon
+        let rect = CGRect(x: pos.x, y: boat.position.y, width: 35, height: 35)
+        powerLoadBar = CircularProgressView(frame: rect)
+        powerLoadBar!.progressColor = UIColor.green
+        powerLoadBar!.trackClr = UIColor.lightGray
         
-       
+        //invert the y since zero starts at the top of the frame for UIView
+        powerLoadBar?.center = CGPoint(x: pos.x, y: frame.maxY - pos.y)
+        powerLoadBar?.progressLayer.lineWidth = 5
+        print("Position of loadBar: \(powerLoadBar!.center)")
+        self.view!.addSubview(powerLoadBar!)
+        
+        //Start filling the cooldown circle according to the power's cooldown rate
+        let cooldownRate = Double(specialPowerIcon!.coolDownRate)
+        powerLoadBar!.setProgressWithAnimation(duration: cooldownRate, fromValue: Float(0), toValue: Float(1))
+        
+        waitForCooldown()
+        
     }
+    
+    //wait the designated cool down time until the powerup can be used again
+    func waitForCooldown() {
+        
+        let wait = SKAction.wait(forDuration: Double(specialPowerIcon!.coolDownRate))
+        let becomeActive = SKAction.customAction(withDuration: 0) { (_, _) in
+            self.specialPowerIcon?.makeActive()
+        }
+        let sequence = SKAction.sequence([wait,becomeActive])
+        worldNode.run(sequence)
+        
+    }
+    
     
     func createScoreLabel() {
         scoreText = SKLabelNode(text: "Kills:")
@@ -223,7 +274,6 @@ class GameScene: SKScene {
         scoreLabel!.position = CGPoint(x: scoreText!.position.x + 100, y: scoreText!.position.y)
         scoreLabel!.zPosition = 11
         worldNode.addChild(scoreLabel!)
-        
         
         let pos = scoreText!.position
         let scoreHUDTile = SKShapeNode(rect: CGRect(x: pos.x - 50, y: pos.y - 8, width: 240, height: 50), cornerRadius: 30)
@@ -318,13 +368,6 @@ class GameScene: SKScene {
         if fightForLifeActive {
             tappedInFightForLife()
         }
-        
-        //        if worldNode.isPaused {
-        //            //check if paused power up buttons are pressed
-        //            let positionInScene = firstTouch!
-        //            let touchedNode = self.atPoint(positionInScene)
-        //            checkAndExecute(powerUpButton: touchedNode)
-        //        }
     }
     
     
@@ -431,12 +474,11 @@ class GameScene: SKScene {
     }
     
     func beginNextLevel() {
-//        raiseDifficulty()
-
+        self.beginSpawningPaperMissiles()
     }
     
     
-    //MARK: - Fight for Life
+    //MARK: - Health Handler
     
     func decreaseHealth(andDestroy node: SKNode) {
         
@@ -485,6 +527,7 @@ class GameScene: SKScene {
         }
     }
     
+    //MARK: - Fight For Life
     
     func fightForLife(against enemy: SKNode) {
         if fightForLifeAvailable == false {
@@ -492,11 +535,14 @@ class GameScene: SKScene {
             return
         }
         
+        print("Position of loadBar: \(powerLoadBar!.center)")
+        
         fightForLifeAvailable = false
         
         haltEnemies(except: enemy)
         createTapLabel()
         
+        specialPowerIcon?.fightForLifeActive = true
         fightForLifeActive = true
         enemy.removeAllActions()
         
@@ -507,20 +553,17 @@ class GameScene: SKScene {
         let moveToFront = SKAction.move(to: newPos, duration: 0.2)
         enemy.run(moveToFront)
         
-        //        let maxHeight = CGFloat(100)
-        //        let position = CGPoint(x: boat.position.x - 70, y: boat.position.y - 60)
-        
         let progress = CGFloat(currentTaps) / CGFloat(maxTaps)
         
         //creates a circular loading bar that fills as you tap. Subview of UIView!
         let point = CGPoint(x: frame.midX, y: frame.midY)
         let rect = CGRect(x: point.x, y: point.y, width: 200, height: 200)
-        circularView = CircularProgressView(frame: rect)
-        circularView?.layer.anchorPoint = CGPoint(x: 1, y: 1)
-        circularView!.progressColor = UIColor.red
-        circularView!.trackClr = UIColor.lightGray
-        self.view!.addSubview(circularView!)
-        circularView!.setProgressWithAnimation(duration: 0, fromValue: Float(progress), toValue: Float(progress))
+        tapLoadingBar = CircularProgressView(frame: rect)
+        tapLoadingBar?.layer.anchorPoint = CGPoint(x: 1, y: 1)
+        tapLoadingBar!.progressColor = UIColor.red
+        tapLoadingBar!.trackClr = UIColor.lightGray
+        self.view!.addSubview(tapLoadingBar!)
+        tapLoadingBar!.setProgressWithAnimation(duration: 0, fromValue: Float(progress), toValue: Float(progress))
         
         tapTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector:#selector(GameScene.addTapResistance), userInfo: nil, repeats: true)
         
@@ -531,12 +574,9 @@ class GameScene: SKScene {
         
         let progress = CGFloat(currentTaps) / CGFloat(maxTaps)
         
-        let strokeEnd = (circularView!.progressLayer.presentation()?.value(forKey: "strokeEnd") as! NSNumber).floatValue
+        let strokeEnd = (tapLoadingBar!.progressLayer.presentation()?.value(forKey: "strokeEnd") as! NSNumber).floatValue
         
-        circularView!.setProgressWithAnimation(duration: 0.2, fromValue: strokeEnd, toValue: Float(progress))
-        
-        //        let maxHeight = CGFloat(100)
-        //        tapBar?.size.height = maxHeight * progress
+        tapLoadingBar!.setProgressWithAnimation(duration: 0.2, fromValue: strokeEnd, toValue: Float(progress))
         
         if currentTaps <= 0 {
             endGame()
@@ -548,21 +588,9 @@ class GameScene: SKScene {
         currentTaps += 1
         
         let progress = CGFloat(currentTaps) / CGFloat(maxTaps)
-        let strokeEnd = (circularView!.progressLayer.presentation()?.value(forKey: "strokeEnd") as! NSNumber).floatValue
+        let strokeEnd = (tapLoadingBar!.progressLayer.presentation()?.value(forKey: "strokeEnd") as! NSNumber).floatValue
         
-        circularView!.setProgressWithAnimation(duration: 0.1, fromValue: strokeEnd, toValue: Float(progress))
-        
-        //        let maxHeight = CGFloat(100)
-        //        tapBar?.size.height = maxHeight * progress
-        //
-        //        let scaleUp = SKAction.scaleX(by: 1, y: 1.1, duration: 0.05)
-        //        let scaleDown = SKAction.scale(to: 1.0, duration: 0.05)
-        //        let sequence = SKAction.sequence([scaleUp,scaleDown])
-        //        tapBar?.run(sequence)
-        
-        //        if let child = worldNode.childNode(withName: "max bar") as? SKSpriteNode {
-        //            child.run(sequence)
-        //        }
+        tapLoadingBar!.setProgressWithAnimation(duration: 0.1, fromValue: strokeEnd, toValue: Float(progress))
         
         if currentTaps >= maxTaps {
             unhaltEnemies()
@@ -621,6 +649,7 @@ class GameScene: SKScene {
         }
     }
     
+    //used after fight for life
     func unhaltEnemies() {
         if tapTimer != nil {
             tapTimer?.invalidate()
@@ -644,21 +673,21 @@ class GameScene: SKScene {
             
         }
         
-        //        if tapBar != nil {
-        //            tapBar!.removeFromParent()
-        //            tapBar = nil
-        //        }
-        circularView?.removeFromSuperview()
-        circularView = nil
+        tapLoadingBar?.removeFromSuperview()
+        tapLoadingBar = nil
         
         destroyAllNodes()
         
-        //        if missilesDeployed != pointsToNextLevel && timerWasValid ?? false {
-        //            timerWasValid = nil
-        //            beginSpawningPaperMissiles()
-        //        } else {
-        //            timerWasValid = nil
-        //        }
+        //Prevents user from accidentally using power while tapping
+        //immediately after fight for life
+        let wait = SKAction.wait(forDuration: 1)
+        let turnOffFightForLife = SKAction.customAction(withDuration: 0) { (_, _) in
+            self.specialPowerIcon?.fightForLifeActive = false
+        }
+        
+        let sequence = SKAction.sequence([wait,turnOffFightForLife])
+        specialPowerIcon?.run(sequence)
+        
     }
     
     //MARK: - End Game
@@ -674,8 +703,11 @@ class GameScene: SKScene {
         }
         
         //in case the circularView is showing
-        circularView?.removeFromSuperview()
-        circularView = nil
+        tapLoadingBar?.removeFromSuperview()
+        tapLoadingBar = nil
+        
+        powerLoadBar?.removeFromSuperview()
+        powerLoadBar = nil
         
         if timer != nil {
             timer?.invalidate()
@@ -701,10 +733,12 @@ extension GameScene: SKPhysicsContactDelegate {
         guard let bodyAName = contact.bodyA.node?.name else {return}
         guard let bodyBName = contact.bodyB.node?.name else {return}
         
+        //handle contacts between defender and power up
         if contacted(powerUpButton: contact.bodyA.node!) || contacted(powerUpButton: contact.bodyB.node!) {
             return
         }
         
+        //handle contacts betweent the defender and a missile
         if missileNameArray.contains(bodyAName) || missileNameArray.contains(bodyBName) {
             if bodyBName == "defender" || bodyAName == "defender" {
                 if contact.bodyA.node?.name == "defender" {
@@ -712,16 +746,19 @@ extension GameScene: SKPhysicsContactDelegate {
                 } else {
                     handleContactBetween(defender: contact.bodyB.node!, andMissile: contact.bodyA.node!)
                 }
+                
                 let generator = UIImpactFeedbackGenerator(style: .medium)
                 generator.impactOccurred()
-                let impactSound = SKAction.playSoundFileNamed("impact.mp3", waitForCompletion: false)
-                self.run(impactSound)
+                
+//                let impactSound = SKAction.playSoundFileNamed("impact.mp3", waitForCompletion: false)
+//                self.run(impactSound)
             }
             
             if fightForLifeActive {
                 return
             }
             
+            //handle contacts against the boat
             if contact.bodyA.node?.name == "boat" {
                 decreaseHealth(andDestroy: contact.bodyB.node!)
                 if boatHealth <= 0 {
@@ -733,13 +770,33 @@ extension GameScene: SKPhysicsContactDelegate {
                     fightForLife(against: contact.bodyA.node!)
                 }
             }
+            
+            //handle contacts against the color-shield
+            if contact.bodyA.node?.name == "color-shield" {
+                handleContactsBetweenColorshield(andMissile: contact.bodyB.node as! SKSpriteNode)
+            } else if contact.bodyB.node?.name == "color-shield" {
+                handleContactsBetweenColorshield(andMissile: contact.bodyA.node as! SKSpriteNode)
+            }
+            
+        }
+    }
+    
+    func handleContactsBetweenColorshield(andMissile missile: SKSpriteNode) {
+        //if it's white, all missiles go through
+        if colorChanger?.activeColor == .white {
+            return
+        }
+        
+        //if it's not matching colors, the missile gets destroyed
+        if missile.color != colorChanger?.activeColor {
+            missile.removeFromParent()
         }
     }
     
     func handleContactBetween(defender: SKNode, andMissile missile: SKNode) {
         
-        if missile.name == "yellow missile" {
-            breakApart(yellowMissile: missile)
+        if missile.name == "splitter enemy" {
+            breakApart(splitterEnemy: missile)
             let pointsAdded = missileNameArray.firstIndex(of: missile.name!)!
             addPointToScore(andExpOfAmount: pointsAdded)
             return
@@ -749,439 +806,6 @@ extension GameScene: SKPhysicsContactDelegate {
         let pointsAdded = missileNameArray.firstIndex(of: missile.name!)! + 1
         addPointToScore(andExpOfAmount: pointsAdded)
         
-    }
-    
-}
-
-// MARK: - Spawn Missiles
-extension GameScene {
-    
-    func beginSpawningPaperMissiles() {
-        guard timer == nil else { fatalError() }
-        timer = Timer.scheduledTimer(timeInterval: missileSpawnRate, target: self, selector:#selector(GameScene.createRandomMissile), userInfo: nil, repeats: true)
-    }
-    
-    @objc func createRandomMissile() {
-        
-        //ensures no missiles are spawned during fight for life.
-        if fightForLifeActive {
-            return
-        }
-        
-        let randomNumber = Int(arc4random_uniform(UInt32(missileVariety)))
-        
-        if randomNumber <= 1 {
-            createPowerUpMissile()
-        }
-        
-        switch randomNumber {
-        //        missile that moves slowly directly towards the boat
-        case 0...60:
-            spawnNormalMissile()
-            
-        //missile that comes out from the right corner slowly, then attacks fast
-        case 61...75:
-            
-            let paperMissile = createMissileNode(atPosition: CGPoint(x: frame.maxX, y: frame.maxY),withName: "red missile")
-            worldNode.addChild(paperMissile)
-            animateWithPulse(ofColor: .red, for: paperMissile)
-            
-            let moveToCenter = SKAction.move(to: CGPoint(x: frame.midX + frame.width/5, y: frame.midY + frame.height/4), duration: 2)
-            let moveToBoat = SKAction.move(to: CGPoint(x: boat.position.x, y: boat.position.y), duration: 0.8)
-            let sequence = SKAction.sequence([moveToCenter,moveToBoat])
-            
-            paperMissile.run(sequence)
-            
-        //missile that comes from the left corner slowly, then attacks fast
-        case 76...90:
-            
-            //            let randXPos = CGFloat(arc4random_uniform(UInt32(frame.minX - frame.maxX)))
-            //            let paperMissile = createMissileNode(atPosition: CGPoint(x: randXPos, y: frame.maxY), withName: "red missile")
-            let paperMissile = createMissileNode(atPosition: CGPoint(x: frame.minX, y: frame.maxY),withName: "red missile")
-            worldNode.addChild(paperMissile)
-            animateWithPulse(ofColor: .red, for: paperMissile)
-            
-            let moveToCenter = SKAction.move(to: CGPoint(x: frame.midX - frame.width/5, y: frame.midY + frame.height/4), duration: 2)
-            let moveToBoat = SKAction.move(to: CGPoint(x: boat.position.x, y: boat.position.y), duration: 0.8)
-            let sequence = SKAction.sequence([moveToCenter,moveToBoat])
-            
-            paperMissile.run(sequence)
-            
-        case 90...100:
-            
-            if missilesDeployed > pointsToNextLevel - 4 {
-                spawnNormalMissile()
-                missilesDeployed += 1
-                
-                if missilesDeployed == pointsToNextLevel {
-                    timer?.invalidate()
-                }
-                
-                return
-            }
-            
-            missilesDeployed += 3
-            let position = CGPoint(x: frame.midX, y: frame.maxY + 30)
-            let paperMissile = createMissileNode(atPosition: position,withName: "yellow missile")
-            worldNode.addChild(paperMissile)
-            animateWithPulse(ofColor: .yellow, for: paperMissile)
-            let moveToBoat = SKAction.move(to: CGPoint(x: boat.position.x, y: boat.position.y), duration: 3.5)
-            paperMissile.run(moveToBoat)
-            
-        default:
-            return
-        }
-        
-        //Determines if it needs to stop spawning missiles because the level is ending
-        missilesDeployed += 1
-        if missilesDeployed == pointsToNextLevel {
-            timer?.invalidate()
-        }
-    }
-    
-    func spawnNormalMissile() {
-        let position = randomPosition()
-        let paperMissile = createMissileNode(atPosition: position,withName: "paper missile")
-        worldNode.addChild(paperMissile)
-        //            createMissileEmitter(for: paperMissile)
-        let moveToBoat = SKAction.move(to: CGPoint(x: boat.position.x, y: boat.position.y), duration: 3.5)
-        paperMissile.run(moveToBoat)
-    }
-    
-    func breakApart(yellowMissile: SKNode) {
-        
-        let impactPos = yellowMissile.position
-        yellowMissile.removeFromParent()
-        
-        let thirdOfWidth = frame.size.width / 3
-        let leftPoint = CGPoint(x: impactPos.x - thirdOfWidth,y: impactPos.y)
-        let rightPoint = CGPoint(x: impactPos.x + thirdOfWidth,y: impactPos.y)
-        let abovePoint = CGPoint(x: impactPos.x,y: impactPos.y + thirdOfWidth)
-        let newPositions = [leftPoint,rightPoint,abovePoint]
-        
-        for index in 0...2 {
-            let position = impactPos
-            let paperMissile = createMissileNode(atPosition: position,withName: "yellow missile child")
-            paperMissile.physicsBody?.categoryBitMask = PhysicsCategories.none
-            paperMissile.physicsBody?.contactTestBitMask = PhysicsCategories.none
-            worldNode.addChild(paperMissile)
-            
-            let normalDistance = frame.maxY - boat.position.y
-            let distanceToBoat = abs(impactPos.y - boat.position.y)
-            let distanceMultiplier = Double(distanceToBoat/normalDistance)
-            
-            let makeYellow = SKAction.colorize(with: .yellow, colorBlendFactor: 1, duration: 0)
-            let moveToPosition = SKAction.move(to: newPositions[index], duration: 0.1)
-            let moveToBoat = SKAction.move(to: boat.position, duration: 6 * distanceMultiplier)
-            let makeDestroyable = SKAction.customAction(withDuration: 0) { (paperMissile, _) in
-                paperMissile.physicsBody?.categoryBitMask = PhysicsCategories.paperMissileCategory
-                paperMissile.physicsBody?.contactTestBitMask = PhysicsCategories.boatCategory | PhysicsCategories.defenderCategory
-            }
-            let sequence = SKAction.sequence([makeYellow,moveToPosition,makeDestroyable,moveToBoat])
-            paperMissile.run(sequence)
-        }
-        
-    }
-    
-    //call this function to get a random position for spawning points
-    func randomPosition() -> CGPoint {
-        let randomNumber = Int(arc4random_uniform(UInt32(7)))
-        var position : CGPoint?
-        
-        switch randomNumber {
-        case 0:
-            position = CGPoint(x: frame.minX, y: frame.midY)
-        case 1:
-            position = CGPoint(x: frame.maxX, y: frame.maxY)
-        case 2:
-            position = CGPoint(x: frame.minX, y: frame.maxY)
-        case 3:
-            position = CGPoint(x: frame.maxX, y: frame.midY)
-        case 4:
-            position = CGPoint(x: frame.minX, y: frame.midY + frame.height/4)
-        case 5:
-            position = CGPoint(x: frame.maxX, y: frame.midY + frame.height/4)
-        case 6:
-            position = CGPoint(x: frame.midX, y: frame.maxY)
-        case 7:
-            position = CGPoint(x: frame.midX - frame.width/4, y: frame.maxY)
-        case 8:
-            position = CGPoint(x: frame.midX + frame.width/4, y: frame.maxY)
-        default:
-            position = CGPoint(x: frame.midX, y: frame.maxY)
-        }
-        return position!
-    }
-    
-    //Call this function to create a paper missile node
-    func createMissileNode(atPosition position: CGPoint,withName name: String) -> SKNode {
-        let paperMissile = SKSpriteNode(texture: SKTexture(imageNamed: "water trail"), color: .white, size: CGSize(width: 30, height: 30))
-        paperMissile.colorBlendFactor = 1.0
-        paperMissile.name = name
-        paperMissile.zPosition = 12
-        paperMissile.position = CGPoint(x: position.x, y: position.y)
-        paperMissile.physicsBody = SKPhysicsBody(circleOfRadius: paperMissile.size.width/2)
-        paperMissile.physicsBody?.categoryBitMask = PhysicsCategories.paperMissileCategory
-        paperMissile.physicsBody?.contactTestBitMask = PhysicsCategories.boatCategory | PhysicsCategories.defenderCategory
-        paperMissile.physicsBody?.collisionBitMask = PhysicsCategories.none
-        paperMissile.physicsBody?.allowsRotation = false
-        return paperMissile
-    }
-    
-    func createMissileEmitter(for missile: SKNode) {
-        guard let emitter = SKEmitterNode(fileNamed: "MissileEmitter.sks") else { return }
-        emitter.zPosition = -1
-        emitter.name = "missile smoke"
-        emitter.targetNode = self.scene
-        missile.addChild(emitter)
-    }
-    
-    func animateWithPulse(ofColor color: UIColor,for node: SKNode) {
-        let colorPulse = SKAction.colorize(with: color, colorBlendFactor: 1.0, duration: 0.2)
-        let whitePulse = SKAction.colorize(with: .white, colorBlendFactor: 1.0, duration: 0.2)
-        let enlarge = SKAction.scale(to: 1.1, duration: 0.2)
-        let shrink = SKAction.scale(to: 1.0, duration: 0.2)
-        
-        let enlargeAndColor = SKAction.group([colorPulse,enlarge])
-        let shrinkAndColorWhite = SKAction.group([shrink,whitePulse])
-        let sequence = SKAction.sequence([enlargeAndColor,shrinkAndColorWhite])
-        
-        node.run(SKAction.repeatForever(sequence))
-    }
-    
-    
-}
-
-//MARK: - PowerUps
-extension GameScene {
-    
-    func createPowerUpMissile() {
-        let spawnXRange = self.frame.width - 100
-        let randX = Int(arc4random_uniform(UInt32(spawnXRange)))
-        
-        let xPos = self.frame.minX + CGFloat(randX)
-        let yPos = self.frame.minY - 50
-        let position = CGPoint(x: xPos, y: yPos)
-        
-        let powerUpArray = ["slow time", "destroy all objects","health"]
-        let randomNumber = Int(arc4random_uniform(UInt32(powerUpArray.count)))
-        
-        let powerUpMissile = createPowerUpButton(withName: powerUpArray[randomNumber])
-        powerUpMissile.position = position
-        worldNode.addChild(powerUpMissile)
-        
-        let newPos = CGPoint(x: position.x, y: frame.maxY + 100)
-        let moveUpWard = SKAction.move(to: newPos, duration: 3)
-        let destroyNode = SKAction.removeFromParent()
-        let sequence = SKAction.sequence([moveUpWard,destroyNode])
-        powerUpMissile.run(sequence)
-        
-    }
-    
-    @objc func doubleTapped() {
-        
-        if powerReady == false {return}
-        powerReady = false
-        
-        let size = defender.size
-        let grow = SKAction.resize(toWidth: size.width * 3, height: size.height * 3, duration: 0.2)
-        let wait = SKAction.wait(forDuration: 3)
-        let shrink = SKAction.resize(toWidth: size.width, height: size.height, duration: 0.2)
-        let cooldown = SKAction.wait(forDuration: 10)
-        let activatePower = SKAction.customAction(withDuration: 0) { (_, _) in
-            self.powerReady = true
-        }
-        let sequence = SKAction.sequence([grow,wait,shrink,cooldown,activatePower])
-        self.defender.run(sequence)
-    }
-    
-    func pauseGame() {
-        if worldNode.isPaused == false {
-            timerWasValid = timer?.isValid ?? false
-            dimPanel?.alpha = 0.75
-            worldNode.isPaused = true
-            timer?.invalidate()
-            timer = nil
-            addPowerUpButtons()
-        }
-    }
-    
-    func unpauseGame() {
-        pauseNode.removeAllChildren()
-        worldNode.isPaused = false
-        dimPanel?.alpha = 0
-        if missilesDeployed != pointsToNextLevel && timerWasValid ?? false {
-            timerWasValid = nil
-            beginSpawningPaperMissiles()
-        } else {
-            timerWasValid = nil
-        }
-    }
-    
-    func addPowerUpButtons() {
-        let pos1 = CGPoint(x: frame.midX, y: frame.midY + 100)
-        let slowTimeBtn = createPowerUpButton(withName: "slow time")
-        pauseNode.addChild(slowTimeBtn)
-        move(powerUpBtn: slowTimeBtn, to: pos1, withCostAmount: "50")
-        
-        let Pos2 = CGPoint(x: frame.midX, y: frame.midY - 100)
-        let destroyAllObjectsBtn = createPowerUpButton(withName: "destroy all objects")
-        pauseNode.addChild(destroyAllObjectsBtn)
-        move(powerUpBtn: destroyAllObjectsBtn, to: Pos2,withCostAmount: "100")
-    }
-    
-    func contacted(powerUpButton: SKNode) -> Bool {
-        guard let name = powerUpButton.name else {return false}
-        
-        if name == "destroy all objects" {
-            destroyAllNodes()
-            powerUpButton.removeFromParent()
-            return true
-        } else if name == "slow time" {
-            worldNode.speed = 0.2
-            defender.speed = 1
-            
-            dimPanel?.color = UIColor.blue
-            dimPanel?.alpha = 1
-            
-            let lowerAlpha = SKAction.fadeAlpha(to: 0.3, duration: 0.1)
-            dimPanel?.run(lowerAlpha)
-            
-            let wait = SKAction.wait(forDuration: 0.5)
-            
-            let increaseSpeed = SKAction.speed(to: 1, duration: 0.5)
-            let worldNodeSequence = SKAction.sequence([wait,increaseSpeed])
-            worldNode.run(worldNodeSequence)
-            
-            let removeColor = SKAction.fadeAlpha(to: 0, duration: 0.5)
-            let revertColor = SKAction.colorize(with: UIColor.black, colorBlendFactor: 1, duration: 0)
-            let dimPanelSequence = SKAction.sequence([wait,removeColor,revertColor])
-            dimPanel?.run(dimPanelSequence)
-            powerUpButton.removeFromParent()
-            return true
-            
-        } else if name == "health"{
-            if boatHealth <= 66 {
-                boatHealth += 34
-            }else if boatHealth > 66 && boatHealth < 100 {
-                boatHealth = 100
-            } else if boatHealth == 100 && boatShield <= 64 {
-                boatShield += 34
-            } else {
-                boatShield = 100
-            }
-            
-            
-            let panel = createDimPanel()
-            panel.color = .green
-            panel.alpha = 0.75
-            worldNode.addChild(panel)
-            
-            let dim = SKAction.fadeAlpha(to: 0, duration: 0.5)
-            let removeNode = SKAction.removeFromParent()
-            let sequence = SKAction.sequence([dim,removeNode])
-            panel.run(sequence)
-            
-            updateHealth()
-            powerUpButton.removeFromParent()
-            return true
-            
-        } else {
-            return false
-        }
-    }
-    
-    func destroyAllNodes() {
-        //Create a flash
-        dimPanel?.color = UIColor.white
-        dimPanel?.alpha = 1.0
-        let slowlyDim = SKAction.fadeAlpha(to: 0, duration: 2)
-        let changeBacktoBlack = SKAction.customAction(withDuration: 0) {_,_ in
-            self.dimPanel?.color = UIColor.black
-        }
-        let sequence = SKAction.sequence([slowlyDim,changeBacktoBlack])
-        dimPanel?.run(sequence)
-        
-        //Destroy all nodes.
-        for node in worldNode.children {
-            guard let nodeName = node.name else {continue}
-            if missileNameArray.contains(nodeName) {
-                node.removeFromParent()
-                let addedAmount = missileNameArray.firstIndex(of: nodeName)! + 1
-                addPointToScore(andExpOfAmount: addedAmount)
-                //Handles yellow missiles which would usually have children for more points
-                if node.name == "yellow missile" {
-                    for _ in 0...2 {
-                        addPointToScore(andExpOfAmount: addedAmount - 1)
-                    }
-                }
-            } else if nodeName == "missile smoke" {
-                node.removeFromParent()
-            }
-        }
-    }
-    
-    func move(powerUpBtn: SKNode,to newLocation: CGPoint, withCostAmount cost: String) {
-        let size = 70
-        let newSize = CGSize(width: size, height: size)
-        let exaggeratedSize = CGSize(width: size + 10, height: size + 10)
-        let smallerSize = CGSize(width: size - 10, height: size - 10)
-        let scaleUp = SKAction.scale(to: exaggeratedSize, duration: 0.1)
-        let scaleDown = SKAction.scale(to: smallerSize, duration: 0.05)
-        let scaleNormal = SKAction.scale(to: newSize, duration: 0.05)
-        let scaleUpSequence = SKAction.sequence([scaleUp,scaleDown,scaleNormal])
-        
-        let move = SKAction.move(to: newLocation, duration: 0.1)
-        
-        //Also adds a label indicating the cost of power up button
-        let wait = SKAction.wait(forDuration: 0.1)
-        let addLabel = SKAction.customAction(withDuration: 0) {_,_ in
-            let costLabel = self.createLabel(for: powerUpBtn, ofAmount: cost)
-            self.pauseNode.addChild(costLabel)
-            let scaleLabel = SKAction.scale(by: 2, duration: 0.1)
-            let moveLabelDown = SKAction.moveTo(y: costLabel.position.y - 55, duration: 0.1)
-            let sequence = SKAction.group([scaleLabel,moveLabelDown])
-            costLabel.run(sequence)
-        }
-        
-        let labelSequence = SKAction.sequence([wait,addLabel])
-        let sequence = SKAction.group([scaleUpSequence,move,labelSequence])
-        powerUpBtn.run(sequence)
-    }
-    
-    func shake(node: SKNode) {
-        let left = CGPoint(x: node.position.x - 10, y: node.position.y)
-        let right = CGPoint(x: node.position.x + 10, y: node.position.y)
-        
-        let moveLeft = SKAction.move(to: left, duration: 0.1)
-        let moveRight = SKAction.move(to: right, duration: 0.1)
-        let returnToPos = SKAction.move(to: node.position, duration: 0.1)
-        let sequence = SKAction.sequence([moveLeft,moveRight,moveLeft,returnToPos])
-        node.run(sequence)
-    }
-    
-    func createPowerUpButton(withName name: String) -> SKSpriteNode {
-        let powerUpButton = SKSpriteNode(texture: SKTexture(imageNamed: name), color: .white, size: CGSize(width: 30, height: 30))
-        powerUpButton.colorBlendFactor = 1.0
-        powerUpButton.name = name
-        powerUpButton.zPosition = 102
-        powerUpButton.position = CGPoint(x: frame.midX, y: frame.midY)
-        powerUpButton.physicsBody = SKPhysicsBody(circleOfRadius: powerUpButton.size.width/2)
-        powerUpButton.physicsBody?.categoryBitMask    = PhysicsCategories.powerUpCategory
-        powerUpButton.physicsBody?.contactTestBitMask = PhysicsCategories.defenderCategory
-        powerUpButton.physicsBody?.collisionBitMask   = PhysicsCategories.none
-        powerUpButton.physicsBody?.allowsRotation = false
-        return powerUpButton
-    }
-    
-    func createLabel(for button: SKNode, ofAmount cost: String) -> SKLabelNode {
-        let buttonLabel = SKLabelNode(text: "$\(cost)")
-        buttonLabel.fontName = "AvenirNext-Bold"
-        buttonLabel.fontSize = 10.0
-        buttonLabel.zPosition = 101
-        buttonLabel.fontColor = UIColor.white
-        buttonLabel.position = CGPoint(x: button.position.x, y: button.position.y)
-        return buttonLabel
     }
     
 }

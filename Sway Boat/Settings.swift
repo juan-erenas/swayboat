@@ -14,4 +14,5 @@ enum PhysicsCategories {
     static let defenderCategory: UInt32 = 0x1 << 1   // 10
     static let paperMissileCategory: UInt32 = 0x1 << 2
     static let powerUpCategory: UInt32 = 0x1 << 3
+    static let colorShieldCategory: UInt32 = 0x1 << 4
 }

@@ -15,6 +15,7 @@ class CircularProgressView: UIView {
         makeCircularPath()
     }
     
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         makeCircularPath()

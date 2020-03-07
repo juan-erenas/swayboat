@@ -7,10 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4410957423F23BCE00B21D4D /* EnemyColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4410957323F23BCE00B21D4D /* EnemyColor.swift */; };
 		4410F3A822EB5DEE002ACE77 /* EndGameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4410F3A722EB5DEE002ACE77 /* EndGameScene.swift */; };
+		44271FDA2403481C00D1E84B /* ColorHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44271FD92403481C00D1E84B /* ColorHandler.swift */; };
+		443695C623EBC0DB000A1E6C /* ColorChanger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443695C523EBC0DB000A1E6C /* ColorChanger.swift */; };
 		4449C30523A6C9A2006437ED /* CircularProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4449C30423A6C9A2006437ED /* CircularProgressView.swift */; };
+		444AB0C723DF8BF7000A880C /* PowerUps.swift in Sources */ = {isa = PBXBuildFile; fileRef = 444AB0C623DF8BF7000A880C /* PowerUps.swift */; };
+		444AB0C923DF8C74000A880C /* SpawnEnemies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 444AB0C823DF8C74000A880C /* SpawnEnemies.swift */; };
 		44606CD723C16C750010C597 /* music.wav in Resources */ = {isa = PBXBuildFile; fileRef = 44606CD623C16C750010C597 /* music.wav */; };
 		44606CD923C1700B0010C597 /* impact.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 44606CD823C1700B0010C597 /* impact.mp3 */; };
+		4497DAF82400DA5100EC984E /* ColorChangerColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4497DAF72400DA5100EC984E /* ColorChangerColor.swift */; };
 		44C23A9B215087C8000AC04D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C23A9A215087C8000AC04D /* AppDelegate.swift */; };
 		44C23A9D215087C8000AC04D /* GameScene.sks in Resources */ = {isa = PBXBuildFile; fileRef = 44C23A9C215087C8000AC04D /* GameScene.sks */; };
 		44C23A9F215087C8000AC04D /* Actions.sks in Resources */ = {isa = PBXBuildFile; fileRef = 44C23A9E215087C8000AC04D /* Actions.sks */; };
@@ -21,15 +27,23 @@
 		44C23AAB215087C9000AC04D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 44C23AA9215087C9000AC04D /* LaunchScreen.storyboard */; };
 		44C23AB3215095C7000AC04D /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C23AB2215095C7000AC04D /* Settings.swift */; };
 		44E47E90216178D200BE23D8 /* DefenderEmitter.sks in Resources */ = {isa = PBXBuildFile; fileRef = 44E47E8F216178D200BE23D8 /* DefenderEmitter.sks */; };
+		44EB050A23DBCED700903C35 /* Enemy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44EB050923DBCED700903C35 /* Enemy.swift */; };
 		44F6341821582E0F00DF0295 /* MenuScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44F6341721582E0F00DF0295 /* MenuScene.swift */; };
 		44F634202158B2E100DF0295 /* MissileEmitter.sks in Resources */ = {isa = PBXBuildFile; fileRef = 44F6341F2158B2E100DF0295 /* MissileEmitter.sks */; };
+		44FC1C0723D3D20B000F8CA0 /* SpecialPowerIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44FC1C0623D3D20B000F8CA0 /* SpecialPowerIcon.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		4410957323F23BCE00B21D4D /* EnemyColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnemyColor.swift; sourceTree = "<group>"; };
 		4410F3A722EB5DEE002ACE77 /* EndGameScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndGameScene.swift; sourceTree = "<group>"; };
+		44271FD92403481C00D1E84B /* ColorHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorHandler.swift; sourceTree = "<group>"; };
+		443695C523EBC0DB000A1E6C /* ColorChanger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorChanger.swift; sourceTree = "<group>"; };
 		4449C30423A6C9A2006437ED /* CircularProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircularProgressView.swift; sourceTree = "<group>"; };
+		444AB0C623DF8BF7000A880C /* PowerUps.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerUps.swift; sourceTree = "<group>"; };
+		444AB0C823DF8C74000A880C /* SpawnEnemies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpawnEnemies.swift; sourceTree = "<group>"; };
 		44606CD623C16C750010C597 /* music.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = music.wav; sourceTree = "<group>"; };
 		44606CD823C1700B0010C597 /* impact.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = impact.mp3; sourceTree = "<group>"; };
+		4497DAF72400DA5100EC984E /* ColorChangerColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorChangerColor.swift; sourceTree = "<group>"; };
 		44C23A97215087C8000AC04D /* Sway Boat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Sway Boat.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		44C23A9A215087C8000AC04D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		44C23A9C215087C8000AC04D /* GameScene.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = GameScene.sks; sourceTree = "<group>"; };
@@ -42,8 +56,10 @@
 		44C23AAC215087C9000AC04D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		44C23AB2215095C7000AC04D /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
 		44E47E8F216178D200BE23D8 /* DefenderEmitter.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = DefenderEmitter.sks; sourceTree = "<group>"; };
+		44EB050923DBCED700903C35 /* Enemy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Enemy.swift; sourceTree = "<group>"; };
 		44F6341721582E0F00DF0295 /* MenuScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuScene.swift; sourceTree = "<group>"; };
 		44F6341F2158B2E100DF0295 /* MissileEmitter.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = MissileEmitter.sks; sourceTree = "<group>"; };
+		44FC1C0623D3D20B000F8CA0 /* SpecialPowerIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpecialPowerIcon.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -81,6 +97,9 @@
 				44F6341721582E0F00DF0295 /* MenuScene.swift */,
 				4410F3A722EB5DEE002ACE77 /* EndGameScene.swift */,
 				44C23AA0215087C8000AC04D /* GameScene.swift */,
+				44271FD92403481C00D1E84B /* ColorHandler.swift */,
+				444AB0C623DF8BF7000A880C /* PowerUps.swift */,
+				444AB0C823DF8C74000A880C /* SpawnEnemies.swift */,
 				44C23AA2215087C8000AC04D /* GameViewController.swift */,
 				44C23AA4215087C8000AC04D /* Main.storyboard */,
 				44C23AA7215087C9000AC04D /* Assets.xcassets */,
@@ -88,11 +107,16 @@
 				44C23AAC215087C9000AC04D /* Info.plist */,
 				44C23AB2215095C7000AC04D /* Settings.swift */,
 				4449C30423A6C9A2006437ED /* CircularProgressView.swift */,
+				44FC1C0623D3D20B000F8CA0 /* SpecialPowerIcon.swift */,
 				44606CD623C16C750010C597 /* music.wav */,
 				44606CD823C1700B0010C597 /* impact.mp3 */,
 				44C23A9E215087C8000AC04D /* Actions.sks */,
 				44C23A9C215087C8000AC04D /* GameScene.sks */,
 				44F6341F2158B2E100DF0295 /* MissileEmitter.sks */,
+				44EB050923DBCED700903C35 /* Enemy.swift */,
+				4410957323F23BCE00B21D4D /* EnemyColor.swift */,
+				443695C523EBC0DB000A1E6C /* ColorChanger.swift */,
+				4497DAF72400DA5100EC984E /* ColorChangerColor.swift */,
 			);
 			path = "Sway Boat";
 			sourceTree = "<group>";
@@ -174,10 +198,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				444AB0C723DF8BF7000A880C /* PowerUps.swift in Sources */,
+				44FC1C0723D3D20B000F8CA0 /* SpecialPowerIcon.swift in Sources */,
+				444AB0C923DF8C74000A880C /* SpawnEnemies.swift in Sources */,
 				44F6341821582E0F00DF0295 /* MenuScene.swift in Sources */,
+				4497DAF82400DA5100EC984E /* ColorChangerColor.swift in Sources */,
+				4410957423F23BCE00B21D4D /* EnemyColor.swift in Sources */,
+				443695C623EBC0DB000A1E6C /* ColorChanger.swift in Sources */,
 				4449C30523A6C9A2006437ED /* CircularProgressView.swift in Sources */,
 				44C23AA1215087C8000AC04D /* GameScene.swift in Sources */,
 				44C23AA3215087C8000AC04D /* GameViewController.swift in Sources */,
+				44271FDA2403481C00D1E84B /* ColorHandler.swift in Sources */,
+				44EB050A23DBCED700903C35 /* Enemy.swift in Sources */,
 				44C23AB3215095C7000AC04D /* Settings.swift in Sources */,
 				4410F3A822EB5DEE002ACE77 /* EndGameScene.swift in Sources */,
 				44C23A9B215087C8000AC04D /* AppDelegate.swift in Sources */,
