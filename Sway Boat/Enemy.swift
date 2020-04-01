@@ -13,34 +13,23 @@ class Enemy : SKSpriteNode {
         fatalError("init(coder:) has not been implemented")
     }
     
-    convenience init(type: EnemyType, size: CGSize, color: EnemyColor) {
+    convenience init(type: EnemyType, size: CGSize) {
         var texture : SKTexture
         var colorValue : UIColor
-        
-        switch color {
-        case .blue:
-            colorValue = UIColor.blue
-        case .green:
-            colorValue = UIColor.green
-        case .red:
-            colorValue = UIColor.red
-        case .yellow:
-            colorValue = UIColor.yellow
-        case .random:
-            let randNum = Int.random(in: 0 ... (EnemyColor.cases.count - 2))
-            let colors = [UIColor.blue,UIColor.green,UIColor.red,UIColor.yellow]
-            colorValue = colors[randNum]
-        }
         
         switch type {
         case .normal:
             texture = SKTexture(imageNamed: "water trail")
+            colorValue = UIColor.white
         case .diver:
             texture = SKTexture(imageNamed: "water trail")
+            colorValue = UIColor.red
         case .splitter:
             texture = SKTexture(imageNamed: "water trail")
+            colorValue = UIColor.yellow
         case .splitterChild:
             texture = SKTexture(imageNamed: "water trail")
+            colorValue = UIColor.yellow
         }
         
         self.init(texture: texture, color: colorValue, size: size, type: type)
@@ -78,13 +67,29 @@ class Enemy : SKSpriteNode {
         case .diver:
             self.killValue = 1
             self.name = "diver enemy"
+            flashWhite(and: .red, forEnemy: self)
         case .splitter:
             self.killValue = 0
             self.name = "splitter enemy"
+            flashWhite(and: .yellow, forEnemy: self)
         case .splitterChild:
             self.killValue = 1
             self.name = "splitter child enemy"
         }
+    }
+    
+    private func flashWhite(and color: UIColor,forEnemy enemy: SKSpriteNode) {
+        
+        let colorPulse = SKAction.colorize(with: color, colorBlendFactor: 1.0, duration: 0.2)
+        let whitePulse = SKAction.colorize(with: .white, colorBlendFactor: 1.0, duration: 0.2)
+        let enlarge = SKAction.scale(to: 1.1, duration: 0.2)
+        let shrink = SKAction.scale(to: 1.0, duration: 0.2)
+        
+        let enlargeAndColor = SKAction.group([colorPulse,enlarge])
+        let shrinkAndColorWhite = SKAction.group([shrink,whitePulse])
+        let sequence = SKAction.sequence([enlargeAndColor,shrinkAndColorWhite])
+        
+        enemy.run(SKAction.repeatForever(sequence))
     }
     
     

@@ -36,15 +36,16 @@ extension GameScene {
     
     @objc func doubleTapped() {
         
-        if fightForLifeActive == true {return}
-        //Prevents accidental doubleTapping after Fight for Life
-        if specialPowerIcon?.fightForLifeActive == true {return}
         if specialPowerIcon?.isActive == false {return}
         specialPowerIcon?.isActive = false
         
         specialPowerIcon?.makeInactive()
-        let cooldownRate = Double(specialPowerIcon!.coolDownRate)
-        powerLoadBar?.setProgressWithAnimation(duration: cooldownRate, fromValue: 0, toValue: 1)
+        
+        
+        inactivateSpecialPower()
+        
+//        let cooldownRate = Double(specialPowerIcon!.coolDownRate)
+//        powerLoadBar?.setProgressWithAnimation(duration: cooldownRate, fromValue: 0, toValue: 1)
         
         //this region is specific to the GROW special power
         let size = defender.size

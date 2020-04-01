@@ -18,11 +18,6 @@ extension GameScene {
     
     @objc func createRandomMissile() {
         
-        //ensures no missiles are spawned during fight for life.
-        if fightForLifeActive {
-            return
-        }
-        
         let randomNumber = Int(arc4random_uniform(UInt32(missileVariety)))
         
         if randomNumber <= 1 {
@@ -39,10 +34,7 @@ extension GameScene {
             
             let enemy = createEnemy(atPosition: CGPoint(x: frame.maxX, y: frame.maxY), ofType: .diver)
             
-//            let paperMissile = createMissileNode(atPosition: CGPoint(x: frame.maxX, y: frame.maxY),withName: "red missile")
-            
             worldNode.addChild(enemy)
-            animateWithPulse(ofColor: .red, for: enemy)
             
             let moveToCenter = SKAction.move(to: CGPoint(x: frame.midX + frame.width/5, y: frame.midY + frame.height/4), duration: 2)
             let moveToBoat = SKAction.move(to: CGPoint(x: boat.position.x, y: boat.position.y), duration: 0.8)
@@ -55,10 +47,7 @@ extension GameScene {
             
             let enemy = createEnemy(atPosition: CGPoint(x: frame.minX, y: frame.maxY), ofType: .diver)
             
-//            let paperMissile = createMissileNode(atPosition: CGPoint(x: frame.minX, y: frame.maxY),withName: "red missile")
-            
             worldNode.addChild(enemy)
-            animateWithPulse(ofColor: .red, for: enemy)
             
             let moveToCenter = SKAction.move(to: CGPoint(x: frame.midX - frame.width/5, y: frame.midY + frame.height/4), duration: 2)
             let moveToBoat = SKAction.move(to: CGPoint(x: boat.position.x, y: boat.position.y), duration: 0.8)
@@ -84,7 +73,6 @@ extension GameScene {
             let enemy = createEnemy(atPosition: position, ofType: .splitter)
 //            let paperMissile = createMissileNode(atPosition: position,withName: "yellow missile")
             worldNode.addChild(enemy)
-            animateWithPulse(ofColor: .yellow, for: enemy)
             let moveToBoat = SKAction.move(to: CGPoint(x: boat.position.x, y: boat.position.y), duration: 3.5)
             enemy.run(moveToBoat)
             
@@ -178,7 +166,7 @@ extension GameScene {
     //Call this function to create a paper missile node
     func createEnemy(atPosition position: CGPoint,ofType type: Enemy.EnemyType) -> SKNode {
         
-        let enemy = Enemy(type: type, size: CGSize(width: 30, height: 30), color: .random)
+        let enemy = Enemy(type: type, size: CGSize(width: 30, height: 30))
         enemy.position = CGPoint(x: position.x, y: position.y)
         enemy.physicsBody = SKPhysicsBody(circleOfRadius: enemy.size.width/2)
         enemy.physicsBody?.categoryBitMask = PhysicsCategories.paperMissileCategory
@@ -209,18 +197,20 @@ extension GameScene {
         missile.addChild(emitter)
     }
     
-    func animateWithPulse(ofColor color: UIColor,for node: SKNode) {
-        let colorPulse = SKAction.colorize(with: color, colorBlendFactor: 1.0, duration: 0.2)
-        let whitePulse = SKAction.colorize(with: .white, colorBlendFactor: 1.0, duration: 0.2)
-        let enlarge = SKAction.scale(to: 1.1, duration: 0.2)
-        let shrink = SKAction.scale(to: 1.0, duration: 0.2)
-        
-        let enlargeAndColor = SKAction.group([colorPulse,enlarge])
-        let shrinkAndColorWhite = SKAction.group([shrink,whitePulse])
-        let sequence = SKAction.sequence([enlargeAndColor,shrinkAndColorWhite])
-        
-        node.run(SKAction.repeatForever(sequence))
-    }
+    //Added this func to Enemy class instead
+    
+//    func animateWithPulse(ofColor color: UIColor,for node: SKNode) {
+//        let colorPulse = SKAction.colorize(with: color, colorBlendFactor: 1.0, duration: 0.2)
+//        let whitePulse = SKAction.colorize(with: .white, colorBlendFactor: 1.0, duration: 0.2)
+//        let enlarge = SKAction.scale(to: 1.1, duration: 0.2)
+//        let shrink = SKAction.scale(to: 1.0, duration: 0.2)
+//
+//        let enlargeAndColor = SKAction.group([colorPulse,enlarge])
+//        let shrinkAndColorWhite = SKAction.group([shrink,whitePulse])
+//        let sequence = SKAction.sequence([enlargeAndColor,shrinkAndColorWhite])
+//
+//        node.run(SKAction.repeatForever(sequence))
+//    }
     
     
 }

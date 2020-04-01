@@ -29,11 +29,6 @@ class SpecialPowerIcon : SKSpriteNode {
     var isActive = false
     var coolDownRate = 0
     
-    //Use this property to allow a small time
-    //after fight for life where user cannot use power
-    //to avoid accidentally double tapping
-    var fightForLifeActive = false
-    
     //add to this enum as new powers are made
     enum PowerType : String {
         case growBig = "grow big"
@@ -53,12 +48,13 @@ class SpecialPowerIcon : SKSpriteNode {
     
     //use this func to decide what the cool down rate is according to the power
     private func getCoolDownRate() -> Int {
-        return 30
+        return 10
     }
     
     func makeActive() {
         isActive = true
-        self.color = .green
+        //purple color
+        self.color = UIColor(red: 73/255, green: 0, blue: 172/255, alpha: 1)
     }
     
     func makeInactive() {
